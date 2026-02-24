@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOMUS Archive — 海外活動記録</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f0e8;
+  --bg-warm: #f0ebe1;
+  --bg-light: #faf7f1;
+  --bg-card: #fffdf8;
+  --ink: #1a1612;
+  --ink-light: #4a4540;
+  --ink-muted: #8a857e;
+  --gold: #c9a84c;
+  --gold-dark: #a88a35;
+  --gold-deeper: #8d7229;
+  --gold-light: #e8d9a0;
+  --gold-ghost: rgba(201,168,76,0.08);
+  --border: #d5cfc4;
+  --border-light: #e5dfd6;
+  --shadow-sm: 0 1px 3px rgba(26,22,18,0.06);
+  --shadow-md: 0 4px 16px rgba(26,22,18,0.08);
+  --shadow-lg: 0 8px 32px rgba(26,22,18,0.10);
+  --shadow-hover: 0 8px 28px rgba(26,22,18,0.12);
+  --font-heading: 'Shippori Mincho', serif;
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.8;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Auth ===== */
+#auth-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--ink);
+  background-image: radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.08) 0%, transparent 70%);
+  color: var(--bg); transition: opacity 0.8s var(--ease);
+}
+#auth-screen.hidden { opacity: 0; pointer-events: none; }
+
+.auth-logo {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  letter-spacing: 0.5em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 1rem;
+}
+.auth-title {
+  font-family: var(--font-heading); font-size: 2.4rem;
+  font-weight: 800; margin-bottom: 0.3rem; letter-spacing: 0.05em;
+}
+.auth-subtitle {
+  font-size: 0.82rem; color: var(--ink-muted); margin-bottom: 3rem;
+  letter-spacing: 0.1em;
+}
+.auth-form {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1rem; width: 100%; max-width: 300px; padding: 0 1.5rem;
+}
+.auth-input {
+  width: 100%; padding: 0.9rem 1rem;
+  font-family: var(--font-mono); font-size: 0.95rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; color: var(--bg); text-align: center;
+  outline: none; transition: all 0.3s var(--ease);
+}
+.auth-input:focus { border-color: var(--gold); background: rgba(255,255,255,0.08); }
+.auth-input::placeholder { color: rgba(255,255,255,0.25); font-size: 0.85rem; }
+.auth-btn {
+  width: 100%; padding: 0.85rem;
+  font-family: var(--font-body); font-size: 0.85rem; font-weight: 500;
+  background: var(--gold); color: var(--ink);
+  border: none; border-radius: 8px; cursor: pointer;
+  transition: all 0.3s var(--ease); letter-spacing: 0.05em;
+}
+.auth-btn:hover { background: var(--gold-dark); transform: translateY(-1px); }
+.auth-error { font-size: 0.75rem; color: #d45; height: 1.2em; }
+
+/* Auth sections */
+.auth-sections {
+  width: 100%; max-width: 860px; padding: 0 1.5rem;
+  display: flex; align-items: stretch; gap: 1.25rem;
+}
+.auth-section {
+  flex: 1;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 1.5rem;
+  background: rgba(255,255,255,0.03);
+}
+.auth-section-label {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 1rem; text-align: center;
+}
+.auth-divider {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.8rem; margin: 0; min-width: 56px;
+  color: rgba(255,255,255,0.2);
+  font-size: 0.75rem; letter-spacing: 0.1em;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; width: 1px; height: 70px;
+  background: rgba(255,255,255,0.08);
+}
+.auth-purchase-section .auth-section-label { color: #5cb85c; }
+.auth-purchase-info {
+  text-align: center; margin-bottom: 1rem;
+}
+.auth-purchase-price {
+  font-family: var(--font-heading); font-size: 1.5rem;
+  font-weight: 700; color: var(--bg); margin-bottom: 0.2rem;
+}
+.auth-purchase-price-sub {
+  font-size: 0.7rem; color: rgba(255,255,255,0.35);
+}
+.auth-purchase-btn {
+  display: block; width: 100%; padding: 0.85rem;
+  font-family: var(--font-body); font-size: 0.85rem; font-weight: 500;
+  background: #5cb85c; color: #fff;
+  border: none; border-radius: 8px; cursor: pointer;
+  transition: all 0.3s var(--ease); letter-spacing: 0.05em;
+  text-align: center; text-decoration: none;
+}
+.auth-purchase-btn:hover { background: #4cae4c; transform: translateY(-1px); }
+.auth-purchase-note {
+  font-size: 0.65rem; color: rgba(255,255,255,0.3);
+  text-align: center; margin-top: 0.8rem; line-height: 1.6;
+}
+
+/* ===== Layout ===== */
+#app { display: none; min-height: 100vh; }
+#app.visible { display: block; }
+
+/* ===== TOP PAGE ===== */
+#top-page { }
+
+.top-header {
+  text-align: center;
+  padding: 3.5rem 1.5rem 2rem;
+  background: var(--ink);
+  background-image: radial-gradient(ellipse at 50% 80%, rgba(201,168,76,0.06) 0%, transparent 60%);
+  color: var(--bg);
+  position: relative;
+}
+.top-header::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dark), transparent);
+}
+.top-brand {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.6em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 0.8rem;
+}
+.top-title {
+  font-family: var(--font-heading); font-size: 2rem;
+  font-weight: 800; letter-spacing: 0.08em; margin-bottom: 0.4rem;
+}
+.top-subtitle {
+  font-family: var(--font-body); font-size: 0.78rem;
+  color: rgba(245,240,232,0.5); letter-spacing: 0.08em;
+  margin-bottom: 1.2rem;
+}
+.top-stats {
+  display: flex; justify-content: center; gap: 2rem;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: rgba(245,240,232,0.4); letter-spacing: 0.05em;
+}
+.top-stats strong {
+  color: var(--gold); font-weight: 500; font-size: 1.1rem;
+  display: block; margin-bottom: 0.1rem;
+}
+
+/* Section headings */
+.section {
+  max-width: 960px; margin: 0 auto;
+  padding: 2.5rem 1.5rem 1rem;
+}
+.section-head {
+  display: flex; align-items: center; gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+.section-label {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--gold-dark);
+}
+.section-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+.section-title {
+  font-family: var(--font-heading); font-size: 1.2rem;
+  font-weight: 700; color: var(--ink);
+}
+
+/* ===== Year Navigation ===== */
+.year-nav {
+  max-width: 1040px; margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+  display: grid; gap: 1.2rem;
+}
+.year-section {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 1.2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s var(--ease);
+  box-shadow: var(--shadow-md);
+  min-height: 260px;
+}
+.year-section:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--gold-light);
+}
+.year-media {
+  min-height: 260px;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--sand-2);
+}
+.year-media-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.year-info {
+  padding: 1.4rem 1.4rem 1.2rem 0;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.year-info .y-year {
+  font-family: var(--font-heading); font-size: 2rem;
+  font-weight: 700; color: var(--ink); letter-spacing: 0.02em;
+}
+.year-info .y-count {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--ink-muted); margin-top: 0.35rem;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.year-info .y-countries {
+  font-size: 0.7rem; color: var(--ink-light);
+  margin-top: 0.8rem; line-height: 1.6;
+}
+.year-countries {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  margin-top: 0.8rem;
+}
+.year-country-pill {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  border: 1px solid var(--border-light);
+  background: var(--bg-light);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.65rem;
+}
+.year-country-flag {
+  width: 18px; height: 12px; border-radius: 2px;
+  object-fit: cover; display: block;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+}
+.year-info .y-cta {
+  margin-top: 1rem;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--gold-dark);
+  letter-spacing: 0.2em; text-transform: uppercase;
+}
+
+/* ===== Country Grid ===== */
+.country-grid {
+  max-width: 960px; margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
+.country-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+.country-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--gold-light);
+}
+
+.country-card .c-thumb {
+  width: 100%; height: 52px;
+  object-fit: cover; display: block;
+  transition: all 0.4s var(--ease);
+}
+.country-card .c-flag {
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(0.95) saturate(0.85);
+}
+.country-card:hover .c-thumb {
+  transform: scale(1.05);
+}
+.country-card:hover .c-flag {
+  filter: brightness(1) saturate(1);
+}
+.country-card .c-thumb-wrap {
+  overflow: hidden; height: 52px;
+  background: var(--border);
+}
+.country-card .c-thumb-placeholder {
+  width: 100%; height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--bg-warm), var(--border));
+  font-family: var(--font-heading); font-size: 1.2rem;
+  color: var(--ink-muted); opacity: 0.4;
+}
+
+.country-card .c-info {
+  padding: 0.4rem 0.5rem;
+}
+.country-card .c-name {
+  font-family: var(--font-heading); font-size: 0.75rem;
+  font-weight: 600; color: var(--ink); margin-bottom: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.country-card .c-meta {
+  display: none;
+}
+.country-card .c-count {
+  display: inline-block;
+  font-family: var(--font-mono); font-size: 0.5rem;
+  color: var(--gold-dark); background: var(--gold-ghost);
+  padding: 0.08rem 0.3rem; border-radius: 3px;
+  margin-top: 0.15rem;
+}
+
+/* ===== List Page ===== */
+#list-page { display: none; overflow-x: hidden; }
+#list-page.visible { display: block; }
+
+.list-topbar-wrap {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border);
+  width: 100%;
+}
+.list-topbar {
+  max-width: 720px; margin: 0 auto;
+  padding: 0.7rem 1.5rem;
+  display: flex; align-items: center; gap: 0.8rem;
+  box-sizing: border-box;
+}
+.list-back {
+  font-family: var(--font-body); font-size: 0.8rem;
+  color: var(--ink-muted); background: none; border: none;
+  cursor: pointer; transition: color 0.2s; flex-shrink: 0;
+  padding: 0.3rem 0; white-space: nowrap;
+}
+.list-back:hover { color: var(--gold-dark); }
+
+.list-title-bar {
+  flex: 1; min-width: 0;
+  font-family: var(--font-heading); font-size: 1.05rem;
+  font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.list-count-badge {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--gold-dark); background: var(--gold-ghost);
+  padding: 0.2rem 0.55rem; border-radius: 4px; white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Sub-filters inside list page */
+.list-subfilters {
+  max-width: 720px; margin: 0 auto;
+  padding: 0.8rem 1.5rem 0;
+  display: flex; gap: 0.3rem; flex-wrap: wrap;
+}
+.sub-btn {
+  font-family: var(--font-body); font-size: 0.68rem;
+  color: var(--ink-muted); background: transparent;
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 0.25rem 0.65rem; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.sub-btn:hover { border-color: var(--gold); color: var(--ink); }
+.sub-btn.active {
+  background: var(--gold); color: var(--ink);
+  border-color: var(--gold); font-weight: 500;
+}
+
+.article-list {
+  max-width: 720px; margin: 0 auto;
+  padding: 0.5rem 1.5rem 3rem;
+}
+
+.article-card {
+  display: flex; gap: 1rem;
+  padding: 1rem 0; border-bottom: 1px solid var(--border-light);
+  cursor: pointer; transition: all 0.2s var(--ease);
+  align-items: flex-start;
+}
+.article-card:hover {
+  background: var(--gold-ghost);
+  padding-left: 0.5rem; margin-left: -0.5rem;
+  padding-right: 0.5rem; margin-right: -0.5rem;
+  border-radius: 6px;
+}
+
+.card-thumb {
+  flex-shrink: 0; width: 80px; height: 80px;
+  border-radius: 8px; overflow: hidden; background: var(--border);
+}
+.card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-thumb-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 1rem;
+  color: var(--ink-muted); background: rgba(0,0,0,0.02);
+}
+
+.card-content { flex: 1; min-width: 0; }
+.card-meta-row {
+  display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+}
+.card-num {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  color: var(--gold); letter-spacing: 0.03em;
+}
+.card-date {
+  font-family: var(--font-mono); font-size: 0.58rem;
+  color: var(--ink-muted);
+}
+.card-country-tag {
+  font-family: var(--font-mono); font-size: 0.52rem;
+  color: var(--ink-muted); background: rgba(0,0,0,0.03);
+  padding: 0.08rem 0.35rem; border-radius: 3px;
+  display: inline-flex; align-items: center; gap: 0.25rem;
+}
+.card-country-flag {
+  width: 14px; height: 10px; border-radius: 2px;
+  object-fit: cover; display: block;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+}
+.card-title {
+  font-family: var(--font-heading); font-size: 1rem; font-weight: 600;
+  margin: 0.12rem 0 0.15rem; color: var(--ink);
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-excerpt {
+  font-size: 0.75rem; color: var(--ink-light); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.country-divider {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 0.6rem;
+  color: var(--ink-muted); font-size: 0.7rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin: 0.3rem 0 0.1rem;
+}
+.country-divider::before,
+.country-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: rgba(26,22,18,0.12);
+}
+
+/* ===== Detail ===== */
+#detail-view {
+  display: none; max-width: 720px; margin: 0 auto;
+  padding: 1.5rem 1.5rem 4rem;
+}
+#detail-view.visible { display: block; }
+
+.detail-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem; padding: 0.5rem 0;
+}
+.detail-back, .detail-home {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--ink-muted); cursor: pointer;
+  padding: 0.3rem 0;
+  border: none; background: none; transition: color 0.2s;
+}
+.detail-back:hover, .detail-home:hover { color: var(--gold-dark); }
+
+.detail-meta { margin-bottom: 1.5rem; }
+.detail-meta-row {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+}
+.detail-num {
+  font-family: var(--font-mono); font-size: 0.72rem;
+  color: var(--gold); letter-spacing: 0.03em;
+}
+.detail-date {
+  font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-muted);
+}
+.detail-country {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  color: var(--ink-muted); background: rgba(0,0,0,0.04);
+  padding: 0.15rem 0.5rem; border-radius: 4px;
+}
+.detail-title {
+  font-family: var(--font-heading); font-size: 1.8rem;
+  font-weight: 700; line-height: 1.4; margin: 0.4rem 0 0;
+}
+
+.detail-body { font-size: 0.95rem; line-height: 2; color: var(--ink); }
+.detail-body p { margin-bottom: 0.8rem; }
+.detail-body h2 {
+  font-family: var(--font-heading); font-size: 1.3rem; font-weight: 600;
+  margin: 2rem 0 0.8rem; padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border);
+}
+.detail-body h3 {
+  font-family: var(--font-heading); font-size: 1.1rem; font-weight: 600;
+  margin: 1.5rem 0 0.6rem;
+}
+.detail-body strong { font-weight: 700; }
+.detail-body hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+.detail-body a { color: var(--gold-dark); text-decoration: underline; text-underline-offset: 2px; }
+.detail-body a:hover { color: var(--gold); }
+.detail-body blockquote {
+  border-left: 3px solid var(--gold); padding: 0.5rem 1rem; margin: 1rem 0;
+  color: var(--ink-light); background: var(--gold-ghost);
+  border-radius: 0 6px 6px 0;
+}
+.detail-body ul, .detail-body ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+.detail-body li { margin-bottom: 0.3rem; }
+.detail-body .article-image { margin: 1.2rem 0; text-align: center; }
+.detail-body .article-image img {
+  max-width: 100%; height: auto; border-radius: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+.article-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 3rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--border); gap: 1rem;
+}
+.nav-btn {
+  display: flex; flex-direction: column;
+  font-family: var(--font-body); font-size: 0.82rem;
+  color: var(--ink-muted); background: none;
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.8rem 1rem; cursor: pointer;
+  transition: all 0.25s var(--ease); max-width: 45%; text-align: left;
+}
+.nav-btn:hover { border-color: var(--gold); color: var(--ink); }
+.nav-btn.next { text-align: right; margin-left: auto; }
+.nav-label {
+  font-family: var(--font-mono); font-size: 0.58rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 0.2rem;
+}
+.nav-title {
+  font-size: 0.8rem; color: var(--ink); font-weight: 500;
+  display: -webkit-box; -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* Footer */
+.site-footer {
+  text-align: center; padding: 2.5rem;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--ink-muted); letter-spacing: 0.12em;
+  border-top: 1px solid var(--border);
+}
+
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--ink-muted); font-size: 0.9rem; }
+
+.scroll-top {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--gold); color: var(--ink);
+  border: none; cursor: pointer; font-size: 1.1rem;
+  display: none; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-md); z-index: 50;
+  transition: all 0.3s var(--ease);
+}
+.scroll-top:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.scroll-top.visible { display: flex; }
+
+/* ===== Global Tabs ===== */
+.global-tabs {
+  display: flex; align-items: center; gap: 0;
+  background: var(--ink);
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  position: sticky; top: 0; z-index: 200;
+}
+.global-tabs-left {
+  display: flex; justify-content: center; flex: 1; gap: 0;
+}
+.global-tab {
+  font-family: var(--font-body); font-size: 0.82rem; font-weight: 500;
+  color: rgba(245,240,232,0.45); background: none; border: none;
+  padding: 0.75rem 2rem; cursor: pointer;
+  transition: all 0.3s var(--ease);
+  position: relative; letter-spacing: 0.03em;
+}
+.global-tab::after {
+  content: ''; position: absolute; bottom: 0; left: 50%; right: 50%;
+  height: 2px; background: var(--gold);
+  transition: all 0.3s var(--ease);
+}
+.global-tab:hover { color: rgba(245,240,232,0.7); }
+.global-tab.active { color: var(--gold); }
+.global-tab.active::after { left: 1rem; right: 1rem; }
+
+/* ===== Language Toggle ===== */
+.lang-toggle {
+  display: flex; align-items: center; gap: 0;
+  margin-right: 1rem; flex-shrink: 0;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  letter-spacing: 0.05em;
+}
+.lang-toggle button {
+  background: none; border: none; cursor: pointer;
+  color: rgba(245,240,232,0.35);
+  padding: 0.3rem 0.4rem;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  transition: color 0.2s var(--ease);
+}
+.lang-toggle button:hover { color: rgba(245,240,232,0.6); }
+.lang-toggle button.active { color: var(--gold); font-weight: 500; }
+.lang-toggle .lang-sep {
+  color: rgba(245,240,232,0.15);
+  font-size: 0.6rem;
+  user-select: none;
+}
+
+/* ===== NOTE PAGE ===== */
+#note-page { display: none; }
+#note-page.visible { display: block; }
+
+.note-header {
+  text-align: center; padding: 2.5rem 1.5rem 1.5rem;
+  background: var(--ink);
+  background-image: radial-gradient(ellipse at 50% 80%, rgba(75,168,76,0.05) 0%, transparent 60%);
+  color: var(--bg); position: relative;
+}
+.note-header::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 1px; background: linear-gradient(90deg, transparent, #5cb85c, transparent);
+}
+.note-header-brand {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.6em; text-transform: uppercase;
+  color: #5cb85c; margin-bottom: 0.5rem;
+}
+.note-header-title {
+  font-family: var(--font-heading); font-size: 1.6rem;
+  font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.3rem;
+}
+.note-header-sub {
+  font-size: 0.75rem; color: rgba(245,240,232,0.4); margin-bottom: 1rem;
+}
+.note-header-stats {
+  display: flex; justify-content: center; gap: 2rem;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: rgba(245,240,232,0.4);
+}
+.note-header-stats strong {
+  color: #5cb85c; font-weight: 500; font-size: 1.1rem;
+  display: block; margin-bottom: 0.1rem;
+}
+
+.note-year-filter {
+  max-width: 720px; margin: 0 auto;
+  padding: 1.2rem 1.5rem 0;
+  display: flex; gap: 0.3rem; flex-wrap: wrap;
+}
+.note-year-btn {
+  font-family: var(--font-body); font-size: 0.72rem;
+  color: var(--ink-muted); background: transparent;
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 0.3rem 0.75rem; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.note-year-btn:hover { border-color: #5cb85c; color: var(--ink); }
+.note-year-btn.active {
+  background: #5cb85c; color: #fff;
+  border-color: #5cb85c; font-weight: 500;
+}
+
+.note-grid {
+  max-width: 720px; margin: 0 auto;
+  padding: 1rem 1.5rem 3rem;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;
+}
+.note-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+  box-shadow: var(--shadow-sm);
+}
+.note-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: #5cb85c;
+}
+.note-card-img {
+  width: 100%; aspect-ratio: 16/9;
+  object-fit: cover; display: block;
+  background: var(--bg-warm);
+}
+.note-card-img-placeholder {
+  width: 100%; aspect-ratio: 16/9;
+  background: var(--bg-warm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-muted); font-size: 2rem;
+}
+.note-card-body {
+  padding: 0.8rem;
+}
+.note-card-date {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--ink-muted); margin-bottom: 0.3rem;
+}
+.note-card-title {
+  font-family: var(--font-heading); font-size: 0.85rem;
+  font-weight: 600; color: var(--ink);
+  line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.note-card-paid {
+  display: inline-block;
+  font-family: var(--font-mono); font-size: 0.55rem;
+  background: var(--gold); color: var(--ink);
+  padding: 0.1rem 0.4rem; border-radius: 3px;
+  margin-top: 0.4rem; font-weight: 500;
+}
+.note-card-excerpt {
+  font-size: 0.7rem; color: var(--ink-muted);
+  line-height: 1.5; margin-top: 0.3rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.note-empty {
+  grid-column: 1 / -1; text-align: center;
+  color: var(--ink-muted); padding: 3rem 0;
+  font-size: 0.9rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .top-header { padding: 2.5rem 1rem 1.5rem; }
+  .top-title { font-size: 1.5rem; }
+  .top-stats { gap: 1.2rem; }
+  .top-stats strong { font-size: 0.95rem; }
+  .section { padding: 2rem 1rem 0.8rem; }
+  .year-nav { padding: 0 1rem 1.2rem; gap: 0.8rem; }
+  .year-section { grid-template-columns: 1fr; gap: 0; }
+  .year-media { min-height: 140px; }
+  .year-info { padding: 1rem 1.2rem 1.1rem; }
+  .year-info .y-year { font-size: 1.6rem; }
+  .country-grid { padding: 0 0.8rem 2rem; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+  .country-card .c-thumb-wrap,
+  .country-card .c-thumb,
+  .country-card .c-thumb-placeholder { height: 42px; }
+  .country-card .c-info { padding: 0.35rem 0.4rem; }
+  .country-card .c-name { font-size: 0.68rem; }
+  .list-topbar { padding: 0.6rem 1rem; max-width: 100%; }
+  .list-subfilters { padding: 0.6rem 1rem 0; }
+  .article-list { padding: 0.3rem 1rem 2rem; }
+  .card-thumb { width: 68px; height: 68px; }
+  .card-title { font-size: 0.9rem; }
+  .card-excerpt { -webkit-line-clamp: 1; }
+  .detail-title { font-size: 1.4rem; }
+  #detail-view { padding: 1rem 1rem 3rem; }
+  .article-nav { flex-direction: column; }
+  .nav-btn { max-width: 100%; width: 100%; }
+  .nav-btn.next { text-align: left; }
+  .global-tab { padding: 0.65rem 1.2rem; font-size: 0.75rem; }
+  .lang-toggle { margin-right: 0.5rem; }
+  .lang-toggle button { padding: 0.3rem 0.3rem; font-size: 0.6rem; }
+  .note-grid { grid-template-columns: 1fr; padding: 0.8rem 1rem 3rem; }
+  .note-year-filter { padding: 0.8rem 1rem 0; }
+  .note-header-title { font-size: 1.3rem; }
+  .auth-sections { max-width: 320px; padding: 0 1rem; flex-direction: column; gap: 1rem; }
+  .auth-section { padding: 1.2rem; }
+  .auth-title { font-size: 1.8rem; }
+  .auth-subtitle { margin-bottom: 2rem; }
+  .auth-divider { flex-direction: row; min-width: auto; gap: 1rem; margin: 0.6rem 0; }
+  .auth-divider::before, .auth-divider::after { width: 100%; height: 1px; }
+}
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-logo">FOMUS</div>
+  <div class="auth-title">海外活動記録</div>
+  <div class="auth-subtitle">会員限定アーカイブ</div>
+  <div class="auth-sections">
+    <div class="auth-section">
+      <div class="auth-section-label">GUILD 会員</div>
+      <div class="auth-form">
+        <input type="password" class="auth-input" id="password-input" placeholder="パスワードを入力" autocomplete="off">
+        <button class="auth-btn" id="auth-btn">ログイン</button>
+        <div class="auth-error" id="auth-error"></div>
+      </div>
+    </div>
+    <div class="auth-divider">または</div>
+    <div class="auth-section auth-purchase-section">
+      <div class="auth-section-label">一般購入</div>
+      <div class="auth-purchase-info">
+        <div class="auth-purchase-price">¥19,800</div>
+        <div class="auth-purchase-price-sub">税込・買い切り</div>
+      </div>
+      <a href="https://buy.stripe.com/xxxxx" class="auth-purchase-btn" target="_blank" rel="noopener">購入してアクセス</a>
+      <div class="auth-purchase-note">※ 決済完了後、アクセス用パスワードを<br>メールでお届けします</div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ===== GLOBAL TABS ===== -->
+  <nav class="global-tabs" id="global-tabs">
+    <div class="global-tabs-left">
+      <button class="global-tab active" data-tab="archive" id="tab-archive">活動記録</button>
+      <button class="global-tab" data-tab="note" id="tab-note">note 記事</button>
+    </div>
+    <div class="lang-toggle" id="lang-toggle">
+      <button data-lang="ja" class="active">JP</button>
+      <span class="lang-sep">|</span>
+      <button data-lang="en">EN</button>
+    </div>
+  </nav>
+
+  <!-- ===== TOP PAGE ===== -->
+  <div id="top-page">
+    <header class="top-header">
+      <div class="top-brand">FOMUS ARCHIVE</div>
+      <h1 class="top-title">海外活動記録</h1>
+      <p class="top-subtitle">まっすーの活動をありのままに</p>
+      <div class="top-stats">
+        <div><strong id="stat-articles">0</strong>articles</div>
+        <div><strong id="stat-countries">0</strong>countries</div>
+        <div><strong id="stat-years">0</strong>years</div>
+      </div>
+    </header>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-label">Year</span>
+        <span class="section-line"></span>
+      </div>
+    </div>
+    <div class="year-nav" id="year-nav"></div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-label">Country</span>
+        <span class="section-line"></span>
+      </div>
+    </div>
+    <div class="country-grid" id="country-grid"></div>
+
+    <footer class="site-footer">
+      &copy; 2024-2025 FOMUS &mdash; All rights reserved
+    </footer>
+  </div>
+
+  <!-- ===== LIST PAGE ===== -->
+  <div id="list-page">
+    <div class="list-topbar-wrap">
+      <div class="list-topbar">
+        <button class="list-back" id="list-back">← トップ</button>
+        <div class="list-title-bar" id="list-title"></div>
+        <span class="list-count-badge" id="list-count"></span>
+      </div>
+    </div>
+    <div class="list-subfilters" id="list-subfilters"></div>
+    <div class="article-list" id="card-container"></div>
+  </div>
+
+  <!-- ===== DETAIL ===== -->
+  <div id="detail-view">
+    <div class="detail-topbar">
+      <button class="detail-back" id="detail-back">← 一覧に戻る</button>
+      <button class="detail-home" id="detail-home">トップへ</button>
+    </div>
+    <div class="detail-meta">
+      <div class="detail-meta-row">
+        <span class="detail-num" id="detail-num"></span>
+        <span class="detail-date" id="detail-date"></span>
+        <span class="detail-country" id="detail-country"></span>
+      </div>
+      <h1 class="detail-title" id="detail-title"></h1>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="article-nav">
+      <button class="nav-btn prev" id="nav-prev">
+        <span class="nav-label">← 前の記事</span>
+        <span class="nav-title" id="nav-prev-title"></span>
+      </button>
+      <button class="nav-btn next" id="nav-next">
+        <span class="nav-label">次の記事 →</span>
+        <span class="nav-title" id="nav-next-title"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== NOTE PAGE ===== -->
+  <div id="note-page">
+    <div class="note-header">
+      <div class="note-header-brand">NOTE</div>
+      <div class="note-header-title">note 記事一覧</div>
+      <div class="note-header-sub">まっすー / MaSU の note 投稿</div>
+      <div class="note-header-stats">
+        <div><strong id="note-stat-total">0</strong>articles</div>
+        <div><strong id="note-stat-years">0</strong>years</div>
+      </div>
+    </div>
+    <div class="note-year-filter" id="note-year-filter"></div>
+    <div class="note-grid" id="note-grid"></div>
+  </div>
+
+</div>
+
+<button class="scroll-top" id="scroll-top">↑</button>
+
+<script src="./articles.js"></script>
+<script src="./note_articles.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  /* ===== i18n Dictionary ===== */
+  const LANG = {
+    ja: {
+      siteTitle: '海外活動記録',
+      siteSubtitle: '会員限定アーカイブ',
+      guildLabel: 'GUILD 会員',
+      passwordPlaceholder: 'パスワードを入力',
+      loginBtn: 'ログイン',
+      authError: 'パスワードが正しくありません',
+      orDivider: 'または',
+      purchaseLabel: '一般購入',
+      purchaseNote: '※ 決済完了後、アクセス用パスワードを<br>メールでお届けします',
+      purchaseBtn: '購入してアクセス',
+      tabArchive: '活動記録',
+      tabNote: 'note 記事',
+      heroSubtitle: 'まっすーの活動をありのままに',
+      backToTop: '← トップ',
+      backToList: '← 一覧に戻る',
+      goToTop: 'トップへ',
+      prevArticle: '← 前の記事',
+      nextArticle: '次の記事 →',
+      filterAll: 'すべて',
+      noArticles: '該当する記事がありません',
+      noteHeader: 'note 記事一覧',
+      noteSub: 'まっすー / MaSU の note 投稿',
+      paid: '有料',
+      yearSuffix: '年',
+      taxIncluded: '税込・買い切り',
+    },
+    en: {
+      siteTitle: 'Overseas Activity Records',
+      siteSubtitle: 'Members-Only Archive',
+      guildLabel: 'GUILD Members',
+      passwordPlaceholder: 'Enter password',
+      loginBtn: 'Login',
+      authError: 'Incorrect password',
+      orDivider: 'or',
+      purchaseLabel: 'Purchase Access',
+      purchaseNote: '* After payment, your access password<br>will be sent via email',
+      purchaseBtn: 'Purchase Access',
+      tabArchive: 'Activity Records',
+      tabNote: 'note Articles',
+      heroSubtitle: "MaSU's adventures, unfiltered",
+      backToTop: '← Top',
+      backToList: '← Back to list',
+      goToTop: 'Top',
+      prevArticle: '← Previous',
+      nextArticle: 'Next →',
+      filterAll: 'All',
+      noArticles: 'No articles found',
+      noteHeader: 'note Articles',
+      noteSub: "MaSU's note posts",
+      paid: 'Paid',
+      yearSuffix: '',
+      taxIncluded: 'Tax included, one-time',
+    }
+  };
+
+  /* ===== Language State ===== */
+  let lang = localStorage.getItem('fomus_lang') || 'ja';
+  function t(key) { return (LANG[lang] && LANG[lang][key]) || LANG.ja[key] || key; }
+
+  function getTitle(a) { return (lang === 'en' && a.title_en) ? a.title_en : a.title; }
+  function getBody(a) { return (lang === 'en' && a.body_en) ? a.body_en : a.body; }
+  function getExcerpt(a) { return (lang === 'en' && a.excerpt_en) ? a.excerpt_en : a.excerpt; }
+  function getCountry(a) {
+    if (lang === 'en') return COUNTRY_EN[a.country] || a.country_en || a.country;
+    return a.country;
+  }
+  function getThumbnail(a) {
+    if (a.thumbnail) return a.thumbnail;
+    const body = a.body || '';
+    const m = body.match(/<img[^>]+src=\"([^\"]+)\"/i);
+    return m ? m[1] : '';
+  }
+
+  const PASSWORDS = ['fomus2000'];
+
+  /* Auth */
+  const authScreen = document.getElementById('auth-screen');
+  const pwInput = document.getElementById('password-input');
+
+  function authenticate() {
+    if (PASSWORDS.includes(pwInput.value.trim())) {
+      sessionStorage.setItem('fomus_auth', 'true');
+      authScreen.classList.add('hidden');
+      setTimeout(() => { authScreen.style.display = 'none'; document.getElementById('app').classList.add('visible'); }, 800);
+    } else {
+      document.getElementById('auth-error').textContent = t('authError');
+      pwInput.value = ''; pwInput.focus();
+    }
+  }
+  document.getElementById('auth-btn').addEventListener('click', authenticate);
+  pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') authenticate(); });
+
+  if (sessionStorage.getItem('fomus_auth') === 'true') {
+    authScreen.style.display = 'none'; document.getElementById('app').classList.add('visible');
+  } else { pwInput.focus(); }
+
+  /* Country flag mapping */
+  const FLAG_CODES = {
+    'アイルランド': 'ie', 'フィリピン': 'ph', 'アメリカ': 'us',
+    'ドバイ(UAE)': 'ae', 'マレーシア': 'my', 'スペイン': 'es',
+    'フランス': 'fr', 'ラトビア': 'lv', 'リトアニア': 'lt',
+    'エストニア': 'ee',
+    'マルタ': 'mt', 'ポルトガル': 'pt', 'ノルウェー': 'no',
+    'デンマーク': 'dk', 'ポーランド': 'pl', 'スウェーデン': 'se',
+    'イギリス': 'gb', 'ギリシャ': 'gr', 'キプロス': 'cy',
+    '日本': 'jp', '中国': 'cn',
+    'ルーマニア': 'ro', 'ベルギー': 'be',
+    'バーレーン': 'bh', 'サウジアラビア': 'sa',
+    '台湾': 'tw'
+  };
+
+  /* Country name EN mapping (for display when no country_en in data) */
+  const COUNTRY_EN = {
+    'フィリピン': 'Philippines', 'アイルランド': 'Ireland',
+    'エストニア': 'Estonia',
+    'マレーシア': 'Malaysia', 'アメリカ': 'USA',
+    'ドバイ(UAE)': 'UAE', 'スペイン': 'Spain',
+    'フランス': 'France', 'ラトビア': 'Latvia',
+    'リトアニア': 'Lithuania', 'マルタ': 'Malta',
+    'ポルトガル': 'Portugal', 'ノルウェー': 'Norway',
+    'デンマーク': 'Denmark', 'ポーランド': 'Poland',
+    'スウェーデン': 'Sweden', 'イギリス': 'UK',
+    'ギリシャ': 'Greece', 'キプロス': 'Cyprus',
+    '日本': 'Japan', '中国': 'China',
+    'ルーマニア': 'Romania', 'ベルギー': 'Belgium',
+    'バーレーン': 'Bahrain', 'サウジアラビア': 'Saudi Arabia',
+    '台湾': 'Taiwan',
+  };
+
+  function getCountryDisplay(jaName) {
+    if (lang === 'en') return COUNTRY_EN[jaName] || jaName;
+    return jaName;
+  }
+
+  /* ===== Navigation State ===== */
+  let listMode = null;
+  let listKey = null;
+  let subFilter = 'all';
+  let currentFiltered = [];
+  let currentArticleId = null;
+
+  const topPage = document.getElementById('top-page');
+  const listPage = document.getElementById('list-page');
+  const detailView = document.getElementById('detail-view');
+  const notePage = document.getElementById('note-page');
+  let currentTab = 'archive';
+
+  function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+  /* ===== Apply UI Translations ===== */
+  function applyUILang() {
+    // Auth screen
+    document.querySelector('.auth-title').textContent = t('siteTitle');
+    document.querySelector('.auth-subtitle').textContent = t('siteSubtitle');
+    document.querySelector('.auth-section-label').textContent = t('guildLabel');
+    pwInput.placeholder = t('passwordPlaceholder');
+    document.getElementById('auth-btn').textContent = t('loginBtn');
+    document.querySelector('.auth-divider').childNodes.forEach(n => {
+      if (n.nodeType === 3) n.textContent = t('orDivider');
+    });
+    document.querySelector('.auth-purchase-section .auth-section-label').textContent = t('purchaseLabel');
+    document.querySelector('.auth-purchase-note').innerHTML = t('purchaseNote');
+    document.querySelector('.auth-purchase-btn').textContent = t('purchaseBtn');
+    document.querySelector('.auth-purchase-price-sub').textContent = t('taxIncluded');
+
+    // Tabs
+    document.getElementById('tab-archive').textContent = t('tabArchive');
+    document.getElementById('tab-note').textContent = t('tabNote');
+
+    // Top header
+    document.querySelector('.top-title').textContent = t('siteTitle');
+    document.querySelector('.top-subtitle').textContent = t('heroSubtitle');
+
+    // Nav buttons
+    document.getElementById('list-back').textContent = t('backToTop');
+    document.getElementById('detail-back').textContent = t('backToList');
+    document.getElementById('detail-home').textContent = t('goToTop');
+
+    // Note header
+    document.querySelector('.note-header-title').textContent = t('noteHeader');
+    document.querySelector('.note-header-sub').textContent = t('noteSub');
+
+    // Lang toggle active state
+    document.querySelectorAll('#lang-toggle button[data-lang]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+
+    // html lang attr
+    document.documentElement.lang = lang === 'en' ? 'en' : 'ja';
+  }
+
+  /* ===== Data Analysis ===== */
+  function analyzeData() {
+    const countryData = {};
+    const yearData = {};
+
+    articles.forEach(a => {
+      const c = a.country;
+      if (!countryData[c]) countryData[c] = { count: 0, thumb: '', dates: [], years: new Set() };
+      countryData[c].count++;
+      if (!countryData[c].thumb && a.thumbnail) countryData[c].thumb = a.thumbnail;
+      if (a.date) { countryData[c].dates.push(a.date); countryData[c].years.add(a.year); }
+
+      const y = a.year;
+      if (y) {
+        if (!yearData[y]) yearData[y] = { count: 0, countries: new Set(), thumb: '' };
+        yearData[y].count++;
+        yearData[y].countries.add(c);
+        if (!yearData[y].thumb && a.thumbnail) yearData[y].thumb = a.thumbnail;
+      }
+    });
+
+    return { countryData, yearData };
+  }
+
+  const { countryData, yearData } = analyzeData();
+  const countriesSorted = Object.entries(countryData).sort((a, b) => b[1].count - a[1].count);
+  const yearsSorted = Object.keys(yearData).sort();
+  const YEAR_HERO = {
+    '2023': 'images/2023.webp',
+    '2024': 'images/2024.jpeg',
+    '2025': 'images/2025.jpg',
+    '2026': 'images/2026.webp'
+  };
+
+  /* ===== Render Top Page ===== */
+  function renderTopPage() {
+    /* Stats */
+    document.getElementById('stat-articles').textContent = articles.length;
+    document.getElementById('stat-countries').textContent = countriesSorted.length;
+    document.getElementById('stat-years').textContent = yearsSorted.length;
+
+    /* Year Nav */
+    const yearNav = document.getElementById('year-nav');
+    yearNav.innerHTML = yearsSorted.map(y => {
+      const d = yearData[y];
+      const countryList = Array.from(d.countries);
+      const countriesHtml = countryList.map(c => {
+        const displayName = getCountryDisplay(c);
+        const code = FLAG_CODES[c] || '';
+        const flagSrc = code ? `https://flagcdn.com/${code}.svg` : '';
+        return `<span class="year-country-pill">
+          ${flagSrc ? `<img class="year-country-flag" src="${flagSrc}" alt="${displayName}">` : ''}
+          <span>${displayName}</span>
+        </span>`;
+      }).join('');
+      const hero = YEAR_HERO[y] || d.thumb || '';
+      const thumbStyle = hero ? ` style="--year-thumb: url('${hero}')"` : '';
+      const mediaImg = hero ? `<img class="year-media-img" src="${hero}" alt="${y}" loading="lazy">` : '';
+      return `<div class="year-section" data-year="${y}">
+        <div class="year-media"${thumbStyle}>${mediaImg}</div>
+        <div class="year-info">
+          <div class="y-year">${y}</div>
+          <div class="y-count">${d.count} articles</div>
+          <div class="year-countries">${countriesHtml}</div>
+          <div class="y-cta">Explore</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    /* Country Grid */
+    const countryGrid = document.getElementById('country-grid');
+    countryGrid.innerHTML = countriesSorted.map(([name, info], i) => {
+      const dates = info.dates.sort();
+      const range = dates.length ? dates[0].slice(0,7).replace('.', '/') + ' –' : '';
+      const code = FLAG_CODES[name] || '';
+      const flagSrc = code ? `https://flagcdn.com/w640/${code}.png` : '';
+      const displayName = getCountryDisplay(name);
+      const thumbHtml = flagSrc
+        ? `<div class="c-thumb-wrap"><img class="c-thumb c-flag" src="${flagSrc}" alt="${displayName}" loading="lazy"></div>`
+        : `<div class="c-thumb-wrap"><div class="c-thumb-placeholder">${displayName.charAt(0)}</div></div>`;
+
+      return `<div class="country-card" data-country="${name}">
+        ${thumbHtml}
+        <div class="c-info">
+          <div class="c-name">${displayName}</div>
+          <div class="c-meta">${range}</div>
+          <span class="c-count">${info.count} articles</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  /* Year nav click */
+  document.getElementById('year-nav').addEventListener('click', e => {
+    const card = e.target.closest('.year-section, .year-card');
+    if (card) openList('year', card.dataset.year);
+  });
+
+  /* Country grid click */
+  document.getElementById('country-grid').addEventListener('click', e => {
+    const card = e.target.closest('.country-card');
+    if (card) openList('country', card.dataset.country);
+  });
+
+  function showPage(page) {
+    topPage.style.display = page === 'top' ? '' : 'none';
+    listPage.classList.toggle('visible', page === 'list');
+    if (page !== 'detail') detailView.classList.remove('visible');
+    if (page === 'detail') detailView.classList.add('visible');
+    notePage.classList.toggle('visible', page === 'note');
+
+    if (page === 'note') currentTab = 'note';
+    else currentTab = 'archive';
+    document.querySelectorAll('.global-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === currentTab);
+    });
+  }
+
+  /* ===== Open List ===== */
+  function openList(mode, key) {
+    listMode = mode;
+    listKey = key;
+    subFilter = 'all';
+
+    let filtered;
+    let title;
+    let subOptions;
+
+    if (mode === 'country') {
+      filtered = articles.filter(a => a.country === key);
+      title = getCountryDisplay(key);
+      const years = [...new Set(filtered.map(a => a.year).filter(Boolean))].sort();
+      subOptions = years.map(y => ({ key: y, label: y + t('yearSuffix'), count: filtered.filter(a => a.year === y).length }));
+    } else {
+      filtered = articles.filter(a => a.year === key);
+      title = key + t('yearSuffix');
+      const countries = {};
+      filtered.forEach(a => { countries[a.country] = (countries[a.country] || 0) + 1; });
+      subOptions = Object.entries(countries)
+        .sort((a, b) => b[1] - a[1])
+        .map(([c, n]) => ({ key: c, label: getCountryDisplay(c), count: n }));
+    }
+
+    document.getElementById('list-title').textContent = title;
+    document.getElementById('list-count').textContent = filtered.length + ' articles';
+
+    const sf = document.getElementById('list-subfilters');
+    if (subOptions.length > 1) {
+      sf.innerHTML = `<button class="sub-btn active" data-sub="all">${t('filterAll')}</button>` +
+        subOptions.map(o => `<button class="sub-btn" data-sub="${o.key}">${o.label}<span style="opacity:0.5;margin-left:3px;font-size:0.55rem">${o.count}</span></button>`).join('');
+      sf.style.display = '';
+    } else {
+      sf.innerHTML = '';
+      sf.style.display = 'none';
+    }
+
+    currentFiltered = filtered;
+    renderCards();
+    showPage('list');
+    window.scrollTo(0, 0);
+    history.pushState({ mode, key }, '', `#${mode}-${encodeURIComponent(key)}`);
+  }
+
+  // Sub-filter click
+  document.getElementById('list-subfilters').addEventListener('click', e => {
+    const btn = e.target.closest('.sub-btn');
+    if (!btn) return;
+    document.querySelectorAll('#list-subfilters .sub-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    subFilter = btn.dataset.sub;
+
+    let base = articles;
+    if (listMode === 'country') base = base.filter(a => a.country === listKey);
+    else base = base.filter(a => a.year === listKey);
+
+    if (subFilter !== 'all') {
+      if (listMode === 'country') base = base.filter(a => a.year === subFilter);
+      else base = base.filter(a => a.country === subFilter);
+    }
+
+    currentFiltered = base;
+    document.getElementById('list-count').textContent = base.length + ' articles';
+    renderCards();
+  });
+
+  function renderCards() {
+    const container = document.getElementById('card-container');
+    if (currentFiltered.length === 0) {
+      container.innerHTML = `<div class="empty-state">${t('noArticles')}</div>`;
+      return;
+    }
+
+    const sorted = currentFiltered.slice().sort((a, b) => {
+      const ad = a.date || '';
+      const bd = b.date || '';
+      const am = ad.match(/(\d{4})[./-](\d{2})[./-](\d{2})/);
+      const bm = bd.match(/(\d{4})[./-](\d{2})[./-](\d{2})/);
+      const at = am ? Date.UTC(+am[1], +am[2] - 1, +am[3]) : Number.POSITIVE_INFINITY;
+      const bt = bm ? Date.UTC(+bm[1], +bm[2] - 1, +bm[3]) : Number.POSITIVE_INFINITY;
+      if (at !== bt) return at - bt;
+      return (a.id || 0) - (b.id || 0);
+    });
+
+    const showCountryDivider = listMode === 'year' && subFilter === 'all';
+    let lastCountry = null;
+    const html = [];
+
+    sorted.forEach(a => {
+      const country = getCountry(a);
+      const flagCode = FLAG_CODES[a.country] || '';
+      const flagSrc = flagCode ? `https://flagcdn.com/${flagCode}.svg` : '';
+      if (showCountryDivider && country && country !== lastCountry) {
+        html.push(`<div class="country-divider">${escapeHtml(country)}</div>`);
+        lastCountry = country;
+      }
+      html.push(`
+      <div class="article-card" data-id="${a.id}">
+        <div class="card-thumb">
+          ${getThumbnail(a)
+            ? `<img src="${getThumbnail(a)}" alt="" loading="lazy">`
+            : `<div class="card-thumb-placeholder">&#9633;</div>`}
+        </div>
+        <div class="card-content">
+          <div class="card-meta-row">
+            <span class="card-num">No.${a.num}</span>
+            ${a.date ? `<span class="card-date">${a.date}</span>` : ''}
+            <span class="card-country-tag">
+              ${flagSrc ? `<img class="card-country-flag" src="${flagSrc}" alt="${country}">` : ''}
+              ${getCountry(a)}
+            </span>
+          </div>
+          <div class="card-title">${escapeHtml(getTitle(a))}</div>
+          <div class="card-excerpt">${escapeHtml(getExcerpt(a))}</div>
+        </div>
+      </div>
+    `);
+    });
+    container.innerHTML = html.join('');
+
+    container.querySelectorAll('.article-card').forEach(card => {
+      card.addEventListener('click', () => showDetail(parseInt(card.dataset.id)));
+    });
+  }
+
+  /* ===== Detail ===== */
+  function showDetail(id) {
+    const article = articles.find(a => a.id === id);
+    if (!article) return;
+    currentArticleId = id;
+
+    document.getElementById('detail-num').textContent = 'No.' + article.num;
+    document.getElementById('detail-date').textContent = article.date || '';
+    document.getElementById('detail-country').textContent = getCountry(article);
+    document.getElementById('detail-title').textContent = getTitle(article);
+    document.getElementById('detail-body').innerHTML = getBody(article);
+
+    const idx = currentFiltered.findIndex(a => a.id === id);
+    const prev = idx > 0 ? currentFiltered[idx - 1] : null;
+    const next = idx < currentFiltered.length - 1 ? currentFiltered[idx + 1] : null;
+
+    const prevBtn = document.getElementById('nav-prev');
+    const nextBtn = document.getElementById('nav-next');
+
+    document.querySelector('#nav-prev .nav-label').textContent = t('prevArticle');
+    document.querySelector('#nav-next .nav-label').textContent = t('nextArticle');
+
+    if (prev) {
+      prevBtn.disabled = false;
+      document.getElementById('nav-prev-title').textContent = getTitle(prev);
+      prevBtn.onclick = () => showDetail(prev.id);
+    } else { prevBtn.disabled = true; document.getElementById('nav-prev-title').textContent = ''; prevBtn.onclick = null; }
+    if (next) {
+      nextBtn.disabled = false;
+      document.getElementById('nav-next-title').textContent = getTitle(next);
+      nextBtn.onclick = () => showDetail(next.id);
+    } else { nextBtn.disabled = true; document.getElementById('nav-next-title').textContent = ''; nextBtn.onclick = null; }
+
+    listPage.classList.remove('visible');
+    showPage('detail');
+    window.scrollTo(0, 0);
+    history.pushState({ id }, '', '#article-' + id);
+  }
+
+  /* Back buttons */
+  document.getElementById('list-back').addEventListener('click', () => {
+    showPage('top');
+    history.pushState({}, '', window.location.pathname);
+  });
+  document.getElementById('detail-back').addEventListener('click', () => {
+    showPage('list');
+    listPage.classList.add('visible');
+    history.pushState({ mode: listMode, key: listKey }, '', `#${listMode}-${encodeURIComponent(listKey)}`);
+  });
+  document.getElementById('detail-home').addEventListener('click', () => {
+    showPage('top');
+    history.pushState({}, '', window.location.pathname);
+  });
+
+  /* Hash routing */
+  function handleHash() {
+    const hash = window.location.hash;
+    const articleMatch = hash.match(/^#article-(\d+)$/);
+    const listMatch = hash.match(/^#(country|year)-(.+)$/);
+
+    if (hash === '#note') {
+      showPage('note');
+    } else if (articleMatch) {
+      const id = parseInt(articleMatch[1]);
+      const a = articles.find(x => x.id === id);
+      if (a && !listMode) {
+        openList('country', a.country);
+      }
+      showDetail(id);
+    } else if (listMatch) {
+      openList(listMatch[1], decodeURIComponent(listMatch[2]));
+    } else {
+      showPage('top');
+    }
+  }
+  window.addEventListener('popstate', handleHash);
+
+  /* Scroll top */
+  const scrollTopBtn = document.getElementById('scroll-top');
+  window.addEventListener('scroll', () => { scrollTopBtn.classList.toggle('visible', window.scrollY > 400); });
+  scrollTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  /* ===== Global Tab Switching ===== */
+  document.querySelectorAll('.global-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      if (target === 'note') {
+        showPage('note');
+        history.pushState({ tab: 'note' }, '', '#note');
+        window.scrollTo(0, 0);
+      } else {
+        showPage('top');
+        history.pushState({}, '', window.location.pathname);
+        window.scrollTo(0, 0);
+      }
+    });
+  });
+
+  /* ===== Language Toggle ===== */
+  document.getElementById('lang-toggle').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-lang]');
+    if (!btn) return;
+    const newLang = btn.dataset.lang;
+    if (newLang === lang) return;
+    lang = newLang;
+    localStorage.setItem('fomus_lang', lang);
+    refreshAll();
+  });
+
+  function refreshAll() {
+    applyUILang();
+    renderTopPage();
+    if (listMode && listKey) {
+      // Re-render the current list view
+      openList(listMode, listKey);
+    }
+    if (currentArticleId) {
+      showDetail(currentArticleId);
+    }
+    initNotePage();
+  }
+
+  /* ===== Note Page ===== */
+  let noteYearFilter = 'all';
+
+  function initNotePage() {
+    if (typeof noteArticles === 'undefined') return;
+
+    const noteYears = {};
+    noteArticles.forEach(a => {
+      const y = a.year || '????';
+      noteYears[y] = (noteYears[y] || 0) + 1;
+    });
+    const noteYearsSorted = Object.keys(noteYears).filter(y => y !== '????').sort().reverse();
+
+    document.getElementById('note-stat-total').textContent = noteArticles.length;
+    document.getElementById('note-stat-years').textContent = noteYearsSorted.length;
+
+    const filterEl = document.getElementById('note-year-filter');
+    filterEl.innerHTML = `<button class="note-year-btn active" data-year="all">${t('filterAll')} <span style="opacity:0.5;font-size:0.55rem">${noteArticles.length}</span></button>` +
+      noteYearsSorted.map(y =>
+        `<button class="note-year-btn" data-year="${y}">${y} <span style="opacity:0.5;font-size:0.55rem">${noteYears[y]}</span></button>`
+      ).join('');
+
+    filterEl.onclick = e => {
+      const btn = e.target.closest('.note-year-btn');
+      if (!btn) return;
+      filterEl.querySelectorAll('.note-year-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      noteYearFilter = btn.dataset.year;
+      renderNoteCards();
+    };
+
+    renderNoteCards();
+  }
+
+  function renderNoteCards() {
+    if (typeof noteArticles === 'undefined') return;
+    const grid = document.getElementById('note-grid');
+    let filtered = noteArticles;
+    if (noteYearFilter !== 'all') {
+      filtered = noteArticles.filter(a => a.year === noteYearFilter);
+    }
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="note-empty">${t('noArticles')}</div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(a => `
+      <a class="note-card" href="${a.url}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">
+        ${a.eyecatch
+          ? `<img class="note-card-img" src="${a.eyecatch}" alt="" loading="lazy">`
+          : `<div class="note-card-img-placeholder">&#9998;</div>`}
+        <div class="note-card-body">
+          <div class="note-card-date">${a.date}</div>
+          <div class="note-card-title">${escapeHtml(a.title)}</div>
+          ${a.is_paid ? `<span class="note-card-paid">${t('paid')}</span>` : ''}
+          ${a.excerpt ? `<div class="note-card-excerpt">${escapeHtml(a.excerpt)}</div>` : ''}
+        </div>
+      </a>
+    `).join('');
+  }
+
+  /* ===== Init ===== */
+  applyUILang();
+  renderTopPage();
+  initNotePage();
+  handleHash();
+})();
+</script>
+</body>
+</html>
