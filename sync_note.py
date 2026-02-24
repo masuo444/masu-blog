@@ -19,6 +19,7 @@ import json
 import time
 import urllib.request
 import urllib.error
+import subprocess
 
 ROOT = "/Users/masuo/Downloads/海外活動記録の全て"
 OUT = os.path.join(ROOT, "output")
@@ -311,6 +312,35 @@ def main():
     print(f"Note articles: {len(note_articles)}")
 
     print("\n=== Sync complete ===")
+
+    # 5. Git auto-commit & push (best-effort)
+    try:
+        if not os.path.isdir(os.path.join(ROOT, ".git")):
+            print("Git repo not found. Skipping auto-commit.")
+            return
+
+        # Check for changes (only output assets)
+        status = subprocess.run(
+            ["git", "-C", ROOT, "status", "--porcelain"],
+            check=False, capture_output=True, text=True
+        )
+        changed = [line for line in status.stdout.splitlines() if line.strip()]
+        if not changed:
+            print("No git changes. Skipping commit/push.")
+            return
+
+        # Stage updated output files only
+        subprocess.run(["git", "-C", ROOT, "add", "output/articles.js", "output/note_articles.js"], check=False)
+
+        # Commit
+        msg = time.strftime("Sync note %Y-%m-%d")
+        subprocess.run(["git", "-C", ROOT, "commit", "-m", msg], check=False)
+
+        # Push
+        subprocess.run(["git", "-C", ROOT, "push", "origin", "main"], check=False)
+        print("Git push attempted.")
+    except Exception as e:
+        print(f"Git auto-commit/push failed: {e}")
 
 
 if __name__ == '__main__':
