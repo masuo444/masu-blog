@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -790,6 +792,324 @@ body {
   font-size: 0.9rem;
 }
 
+/* ===== Dark Mode ===== */
+html.dark {
+  --bg: #1a1612;
+  --bg-warm: #1e1a15;
+  --bg-light: #232019;
+  --bg-card: #2a2520;
+  --ink: #f5f0e8;
+  --ink-light: #c5c0b8;
+  --ink-muted: #8a857e;
+  --gold: #c9a84c;
+  --border: #3a352e;
+  --border-light: #302b25;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.3);
+  --shadow-hover: 0 8px 28px rgba(0,0,0,0.35);
+}
+html.dark .card-country-tag { background: rgba(255,255,255,0.06); }
+html.dark .detail-country { background: rgba(255,255,255,0.06); }
+html.dark .card-thumb-placeholder { background: rgba(255,255,255,0.04); }
+html.dark .country-divider::before,
+html.dark .country-divider::after { background: rgba(245,240,232,0.12); }
+/* Keep auth screen dark in dark mode */
+html.dark #auth-screen { background: #1a1612; color: #f5f0e8; }
+/* Keep global tabs & top-header dark in dark mode */
+html.dark .global-tabs { background: #0f0d0a; }
+html.dark .top-header { background: #0f0d0a; color: #f5f0e8; }
+html.dark .note-header { background: #0f0d0a; color: #f5f0e8; }
+html.dark .sub-btn { color: var(--ink-muted); border-color: var(--border); }
+html.dark .note-year-btn { color: var(--ink-muted); border-color: var(--border); }
+html.dark .leaflet-popup-content-wrapper { background: var(--bg-card) !important; color: var(--ink) !important; }
+html.dark .leaflet-popup-tip { background: var(--bg-card) !important; }
+html.dark .list-topbar-wrap { background: var(--bg-light); border-color: var(--border); }
+
+.dark-toggle {
+  display: flex; align-items: center;
+  margin-right: 0.5rem; flex-shrink: 0;
+}
+.dark-toggle button {
+  background: none; border: none; cursor: pointer;
+  color: rgba(245,240,232,0.4);
+  padding: 0.35rem 0.45rem;
+  font-size: 1rem; line-height: 1;
+  transition: color 0.2s var(--ease);
+  display: flex; align-items: center;
+}
+.dark-toggle button:hover { color: rgba(245,240,232,0.7); }
+.dark-toggle button.active { color: var(--gold); }
+
+/* ===== Search Overlay ===== */
+.search-toggle {
+  display: flex; align-items: center;
+  margin-right: 0.3rem; flex-shrink: 0;
+}
+.search-toggle button {
+  background: none; border: none; cursor: pointer;
+  color: rgba(245,240,232,0.4);
+  padding: 0.35rem 0.45rem;
+  font-size: 1rem; line-height: 1;
+  transition: color 0.2s var(--ease);
+  display: flex; align-items: center;
+}
+.search-toggle button:hover { color: rgba(245,240,232,0.7); }
+
+#search-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--bg);
+  display: none; flex-direction: column;
+  overflow-y: auto;
+}
+#search-overlay.visible { display: flex; }
+
+.search-header {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-light);
+  position: sticky; top: 0; z-index: 10;
+}
+.search-input {
+  flex: 1;
+  font-family: var(--font-body); font-size: 1.1rem;
+  background: none; border: none; outline: none;
+  color: var(--ink);
+  padding: 0.5rem 0;
+}
+.search-input::placeholder { color: var(--ink-muted); }
+.search-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-muted); font-size: 1.5rem; line-height: 1;
+  padding: 0.2rem 0.4rem; transition: color 0.2s;
+}
+.search-close:hover { color: var(--ink); }
+
+.search-results {
+  max-width: 720px; width: 100%; margin: 0 auto;
+  padding: 0.5rem 1.5rem 3rem;
+}
+.search-results-label {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--gold-dark); letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 1.5rem 0 0.8rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+.search-empty {
+  text-align: center; padding: 3rem 1rem;
+  color: var(--ink-muted); font-size: 0.9rem;
+}
+
+/* ===== World Map ===== */
+.map-section {
+  max-width: 960px; margin: 0 auto;
+  padding: 0 1.5rem 1rem;
+}
+.map-container {
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  background: var(--bg-card);
+}
+#world-map {
+  width: 100%; height: 380px;
+  background: var(--bg-warm);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  font-family: var(--font-body) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+.leaflet-popup-content {
+  margin: 0.6rem 0.8rem !important;
+  font-size: 0.82rem !important;
+  line-height: 1.5 !important;
+}
+.map-popup-name {
+  font-family: var(--font-heading);
+  font-weight: 600; font-size: 0.9rem;
+  color: var(--ink); margin-bottom: 0.15rem;
+}
+.map-popup-count {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--gold-dark);
+}
+.leaflet-container { font-family: var(--font-body) !important; }
+
+/* ===== Reading Time ===== */
+.card-reading-time {
+  font-family: var(--font-mono); font-size: 0.55rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.detail-reading-time {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--ink-muted);
+}
+
+/* ===== Bookmarks ===== */
+.bookmark-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-muted); font-size: 1rem;
+  padding: 0.15rem 0.3rem; line-height: 1;
+  transition: all 0.2s var(--ease);
+  flex-shrink: 0;
+}
+.bookmark-btn:hover { color: var(--gold); }
+.bookmark-btn.active { color: var(--gold); }
+
+.card-bookmark-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-muted); font-size: 0.85rem;
+  padding: 0.1rem 0.25rem; line-height: 1;
+  transition: all 0.2s var(--ease);
+  flex-shrink: 0; margin-left: auto;
+}
+.card-bookmark-btn:hover { color: var(--gold); }
+.card-bookmark-btn.active { color: var(--gold); }
+
+.bookmark-filter-wrap {
+  max-width: 960px; margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.bookmark-filter-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-family: var(--font-body); font-size: 0.72rem;
+  color: var(--ink-muted); background: transparent;
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 0.3rem 0.75rem; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.bookmark-filter-btn:hover { border-color: var(--gold); color: var(--ink); }
+.bookmark-filter-btn.active {
+  background: var(--gold); color: var(--ink);
+  border-color: var(--gold); font-weight: 500;
+}
+.bookmark-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--gold-ghost); color: var(--gold-dark);
+  font-family: var(--font-mono); font-size: 0.55rem;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  padding: 0 0.25rem;
+}
+.bookmark-filter-btn.active .bookmark-badge {
+  background: rgba(0,0,0,0.15); color: var(--ink);
+}
+
+/* ===== Timeline View ===== */
+.timeline-toggle-wrap {
+  display: inline-flex; margin-left: auto;
+}
+.timeline-toggle-btn {
+  font-family: var(--font-body); font-size: 0.68rem;
+  color: var(--ink-muted); background: transparent;
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 0.25rem 0.65rem; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.timeline-toggle-btn:hover { border-color: var(--gold); color: var(--ink); }
+.timeline-toggle-btn.active {
+  background: var(--gold); color: var(--ink);
+  border-color: var(--gold); font-weight: 500;
+}
+
+#timeline-view {
+  display: none;
+  max-width: 960px; margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+#timeline-view.visible { display: block; }
+
+.timeline-month-label {
+  font-family: var(--font-heading); font-size: 1rem;
+  font-weight: 600; color: var(--ink);
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.timeline-month-label:first-child { margin-top: 0.5rem; }
+
+.timeline-track {
+  position: relative;
+  padding-left: 140px;
+}
+.timeline-track::before {
+  content: ''; position: absolute;
+  left: 120px; top: 0; bottom: 0;
+  width: 2px; background: var(--border);
+}
+
+.timeline-entry {
+  position: relative;
+  padding: 0.5rem 0 0.5rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+.timeline-entry:hover { background: var(--gold-ghost); border-radius: 8px; }
+
+.timeline-dot {
+  position: absolute;
+  left: -20px; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 2px var(--gold);
+  z-index: 1;
+}
+
+.timeline-date {
+  position: absolute;
+  left: -140px; top: 50%;
+  transform: translateY(-50%);
+  width: 110px; text-align: right;
+  font-family: var(--font-mono); font-size: 0.68rem;
+  color: var(--ink-muted);
+}
+
+.timeline-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s var(--ease);
+}
+.timeline-entry:hover .timeline-card {
+  box-shadow: var(--shadow-hover);
+  border-color: var(--gold-light);
+}
+.timeline-card-num {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--gold); margin-right: 0.4rem;
+}
+.timeline-card-country {
+  font-family: var(--font-mono); font-size: 0.55rem;
+  color: var(--ink-muted); background: rgba(0,0,0,0.03);
+  padding: 0.05rem 0.3rem; border-radius: 3px;
+}
+html.dark .timeline-card-country { background: rgba(255,255,255,0.06); }
+.timeline-card-title {
+  font-family: var(--font-heading); font-size: 0.92rem;
+  font-weight: 600; color: var(--ink);
+  margin-top: 0.2rem;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.timeline-card-excerpt {
+  font-size: 0.72rem; color: var(--ink-light); line-height: 1.5;
+  margin-top: 0.2rem;
+  display: -webkit-box; -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.timeline-card-meta {
+  display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 640px) {
   /* --- Top Header --- */
@@ -866,6 +1186,37 @@ body {
   .auth-subtitle { margin-bottom: 2rem; }
   .auth-divider { flex-direction: row; min-width: auto; gap: 1rem; margin: 0.6rem 0; }
   .auth-divider::before, .auth-divider::after { width: 100%; height: 1px; }
+
+  /* --- Search Overlay --- */
+  .search-header { padding: 0.8rem 0.75rem; gap: 0.5rem; }
+  .search-input { font-size: 1rem; }
+  .search-results { padding: 0.3rem 0.75rem 2rem; }
+
+  /* --- World Map --- */
+  .map-section { padding: 0 0.75rem 0.8rem; }
+  #world-map { height: 250px; }
+
+  /* --- Timeline --- */
+  .timeline-track { padding-left: 0; }
+  .timeline-track::before { left: 8px; }
+  .timeline-entry { padding: 0.4rem 0 0.4rem 2rem; }
+  .timeline-dot { left: 8px; }
+  .timeline-date {
+    position: static; transform: none;
+    width: auto; text-align: left;
+    font-size: 0.6rem; margin-bottom: 0.15rem;
+  }
+  .timeline-card { padding: 0.6rem 0.8rem; }
+  .timeline-card-title { font-size: 0.85rem; }
+
+  /* --- Bookmark --- */
+  .bookmark-filter-wrap { padding: 0 0.75rem; }
+
+  /* --- Dark / Search toggles --- */
+  .dark-toggle { margin-right: 0.2rem; }
+  .dark-toggle button { padding: 0.3rem 0.3rem; font-size: 0.9rem; }
+  .search-toggle { margin-right: 0.1rem; }
+  .search-toggle button { padding: 0.3rem 0.3rem; font-size: 0.9rem; }
 }
 </style>
 </head>
@@ -897,6 +1248,16 @@ body {
   </div>
 </div>
 
+<!-- ===== SEARCH OVERLAY ===== -->
+<div id="search-overlay">
+  <div class="search-header">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" class="search-input" id="search-input" placeholder="記事を検索..." autocomplete="off">
+    <button class="search-close" id="search-close">&times;</button>
+  </div>
+  <div class="search-results" id="search-results"></div>
+</div>
+
 <div id="app">
 
   <!-- ===== GLOBAL TABS ===== -->
@@ -904,6 +1265,14 @@ body {
     <div class="global-tabs-left">
       <button class="global-tab active" data-tab="archive" id="tab-archive">活動記録</button>
       <button class="global-tab" data-tab="note" id="tab-note">note 記事</button>
+    </div>
+    <div class="search-toggle" id="search-toggle">
+      <button id="search-open-btn" aria-label="検索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+    <div class="dark-toggle" id="dark-toggle">
+      <button id="dark-mode-btn" aria-label="ダークモード">&#9790;</button>
     </div>
     <div class="lang-toggle" id="lang-toggle">
       <button data-lang="ja" class="active">JP</button>
@@ -925,19 +1294,42 @@ body {
       </div>
     </header>
 
+    <!-- World Map -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-label">Map</span>
+        <span class="section-line"></span>
+      </div>
+    </div>
+    <div class="map-section">
+      <div class="map-container">
+        <div id="world-map"></div>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section-head">
         <span class="section-label">Year</span>
         <span class="section-line"></span>
+        <div class="timeline-toggle-wrap">
+          <button class="timeline-toggle-btn" id="timeline-toggle-btn">タイムライン</button>
+        </div>
       </div>
     </div>
     <div class="year-nav" id="year-nav"></div>
+    <div id="timeline-view"></div>
 
     <div class="section">
       <div class="section-head">
         <span class="section-label">Country</span>
         <span class="section-line"></span>
       </div>
+    </div>
+    <div class="bookmark-filter-wrap" id="bookmark-filter-wrap">
+      <button class="bookmark-filter-btn" id="bookmark-filter-btn">
+        <span>&#9733; ブックマーク</span>
+        <span class="bookmark-badge" id="bookmark-badge">0</span>
+      </button>
     </div>
     <div class="country-grid" id="country-grid"></div>
 
@@ -970,6 +1362,8 @@ body {
         <span class="detail-num" id="detail-num"></span>
         <span class="detail-date" id="detail-date"></span>
         <span class="detail-country" id="detail-country"></span>
+        <span class="detail-reading-time" id="detail-reading-time"></span>
+        <button class="bookmark-btn" id="detail-bookmark-btn" title="ブックマーク">&#9733;</button>
       </div>
       <h1 class="detail-title" id="detail-title"></h1>
     </div>
@@ -1039,6 +1433,15 @@ body {
       paid: '有料',
       yearSuffix: '年',
       taxIncluded: '税込・買い切り',
+      searchPlaceholder: '記事を検索...',
+      searchResultsArchive: '活動記録',
+      searchResultsNote: 'note 記事',
+      searchEmpty: '検索結果がありません',
+      searchHint: 'タイトルや本文で検索できます',
+      readingTime: '約{n}分',
+      bookmarks: 'ブックマーク',
+      bookmarkEmpty: 'ブックマークした記事がありません',
+      timeline: 'タイムライン',
     },
     en: {
       siteTitle: 'Overseas Activity Records',
@@ -1066,6 +1469,15 @@ body {
       paid: 'Paid',
       yearSuffix: '',
       taxIncluded: 'Tax included, one-time',
+      searchPlaceholder: 'Search articles...',
+      searchResultsArchive: 'Activity Records',
+      searchResultsNote: 'note Articles',
+      searchEmpty: 'No results found',
+      searchHint: 'Search by title or content',
+      readingTime: '~{n} min',
+      bookmarks: 'Bookmarks',
+      bookmarkEmpty: 'No bookmarked articles yet',
+      timeline: 'Timeline',
     }
   };
 
@@ -1097,7 +1509,7 @@ body {
     if (PASSWORDS.includes(pwInput.value.trim())) {
       sessionStorage.setItem('fomus_auth', 'true');
       authScreen.classList.add('hidden');
-      setTimeout(() => { authScreen.style.display = 'none'; document.getElementById('app').classList.add('visible'); }, 800);
+      setTimeout(() => { authScreen.style.display = 'none'; document.getElementById('app').classList.add('visible'); if (window._fomusMap) window._fomusMap.invalidateSize(); else initWorldMap(); }, 800);
     } else {
       document.getElementById('auth-error').textContent = t('authError');
       pwInput.value = ''; pwInput.focus();
@@ -1122,7 +1534,7 @@ body {
     '日本': 'jp', '中国': 'cn',
     'ルーマニア': 'ro', 'ベルギー': 'be',
     'バーレーン': 'bh', 'サウジアラビア': 'sa',
-    '台湾': 'tw'
+    '台湾': 'tw', 'カタール': 'qa', 'オマーン': 'om'
   };
 
   /* Country name EN mapping (for display when no country_en in data) */
@@ -1140,7 +1552,7 @@ body {
     '日本': 'Japan', '中国': 'China',
     'ルーマニア': 'Romania', 'ベルギー': 'Belgium',
     'バーレーン': 'Bahrain', 'サウジアラビア': 'Saudi Arabia',
-    '台湾': 'Taiwan',
+    '台湾': 'Taiwan', 'カタール': 'Qatar', 'オマーン': 'Oman',
   };
 
   function getCountryDisplay(jaName) {
@@ -1203,6 +1615,23 @@ body {
 
     // html lang attr
     document.documentElement.lang = lang === 'en' ? 'en' : 'ja';
+
+    // Search
+    document.getElementById('search-input').placeholder = t('searchPlaceholder');
+
+    // Timeline toggle
+    const tlBtn = document.getElementById('timeline-toggle-btn');
+    if (tlBtn && !tlBtn.classList.contains('active')) {
+      tlBtn.textContent = t('timeline');
+    } else if (tlBtn && tlBtn.classList.contains('active')) {
+      tlBtn.textContent = lang === 'en' ? 'Cards' : 'カード';
+    }
+
+    // Bookmark filter
+    const bmFilterBtn = document.getElementById('bookmark-filter-btn');
+    if (bmFilterBtn) {
+      bmFilterBtn.querySelector('span:first-child').innerHTML = '&#9733; ' + t('bookmarks');
+    }
   }
 
   /* ===== Data Analysis ===== */
@@ -1321,6 +1750,13 @@ body {
     document.querySelectorAll('.global-tab').forEach(t => {
       t.classList.toggle('active', t.dataset.tab === currentTab);
     });
+
+    // Reset bookmark filter when going back to top
+    if (page === 'top') {
+      showingBookmarks = false;
+      const bmBtn = document.getElementById('bookmark-filter-btn');
+      if (bmBtn) bmBtn.classList.remove('active');
+    }
   }
 
   /* ===== Open List ===== */
@@ -1420,6 +1856,8 @@ body {
         html.push(`<div class="country-divider">${escapeHtml(country)}</div>`);
         lastCountry = country;
       }
+      const readMin = calcReadingTime(a.body);
+      const bmActive = isBookmarked(a.id) ? ' active' : '';
       html.push(`
       <div class="article-card" data-id="${a.id}">
         <div class="card-thumb">
@@ -1435,6 +1873,8 @@ body {
               ${flagSrc ? `<img class="card-country-flag" src="${flagSrc}" alt="${country}">` : ''}
               ${getCountry(a)}
             </span>
+            <span class="card-reading-time">${formatReadingTime(readMin)}</span>
+            <button class="card-bookmark-btn${bmActive}" data-bookmark-id="${a.id}" title="${t('bookmarks')}">&#9733;</button>
           </div>
           <div class="card-title">${escapeHtml(getTitle(a))}</div>
           <div class="card-excerpt">${escapeHtml(getExcerpt(a))}</div>
@@ -1445,7 +1885,18 @@ body {
     container.innerHTML = html.join('');
 
     container.querySelectorAll('.article-card').forEach(card => {
-      card.addEventListener('click', () => showDetail(parseInt(card.dataset.id)));
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.card-bookmark-btn')) return;
+        showDetail(parseInt(card.dataset.id));
+      });
+    });
+    container.querySelectorAll('.card-bookmark-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.bookmarkId);
+        const active = toggleBookmark(id);
+        btn.classList.toggle('active', active);
+      });
     });
   }
 
@@ -1458,6 +1909,22 @@ body {
     document.getElementById('detail-num').textContent = 'No.' + article.num;
     document.getElementById('detail-date').textContent = article.date || '';
     document.getElementById('detail-country').textContent = getCountry(article);
+
+    // Reading time in detail meta
+    const detailReadTime = document.getElementById('detail-reading-time');
+    if (detailReadTime) {
+      detailReadTime.textContent = formatReadingTime(calcReadingTime(article.body));
+    }
+    // Bookmark in detail
+    const detailBmBtn = document.getElementById('detail-bookmark-btn');
+    if (detailBmBtn) {
+      detailBmBtn.classList.toggle('active', isBookmarked(article.id));
+      detailBmBtn.onclick = () => {
+        const active = toggleBookmark(article.id);
+        detailBmBtn.classList.toggle('active', active);
+      };
+    }
+
     document.getElementById('detail-title').textContent = getTitle(article);
     document.getElementById('detail-body').innerHTML = getBody(article);
 
@@ -1561,7 +2028,7 @@ body {
   function refreshAll() {
     applyUILang();
     renderTopPage();
-    if (listMode && listKey) {
+    if (listMode && listKey && listMode !== 'bookmark') {
       // Re-render the current list view
       openList(listMode, listKey);
     }
@@ -1569,6 +2036,11 @@ body {
       showDetail(currentArticleId);
     }
     initNotePage();
+    updateBookmarkBadge();
+    // Re-render timeline if visible
+    if (timelineVisible) {
+      renderTimeline();
+    }
   }
 
   /* ===== Note Page ===== */
@@ -1633,10 +2105,453 @@ body {
     `).join('');
   }
 
+  /* ===== Reading Time Helper ===== */
+  function calcReadingTime(html) {
+    if (!html) return 1;
+    const text = html.replace(/<[^>]*>/g, '');
+    const chars = text.length;
+    return Math.max(1, Math.round(chars / 600));
+  }
+
+  function formatReadingTime(n) {
+    return t('readingTime').replace('{n}', n);
+  }
+
+  /* ===== Bookmarks ===== */
+  function getBookmarks() {
+    try { return JSON.parse(localStorage.getItem('fomus_bookmarks') || '[]'); }
+    catch(e) { return []; }
+  }
+  function setBookmarks(arr) {
+    localStorage.setItem('fomus_bookmarks', JSON.stringify(arr));
+  }
+  function isBookmarked(id) {
+    return getBookmarks().includes(id);
+  }
+  function toggleBookmark(id) {
+    const bm = getBookmarks();
+    const idx = bm.indexOf(id);
+    if (idx > -1) bm.splice(idx, 1);
+    else bm.push(id);
+    setBookmarks(bm);
+    updateBookmarkBadge();
+    return bm.includes(id);
+  }
+  function updateBookmarkBadge() {
+    const count = getBookmarks().length;
+    const badge = document.getElementById('bookmark-badge');
+    if (badge) badge.textContent = count;
+  }
+
+  let showingBookmarks = false;
+
+  document.getElementById('bookmark-filter-btn').addEventListener('click', function() {
+    showingBookmarks = !showingBookmarks;
+    this.classList.toggle('active', showingBookmarks);
+    if (showingBookmarks) {
+      const bmIds = getBookmarks();
+      const bmArticles = articles.filter(a => bmIds.includes(a.id));
+      if (bmArticles.length === 0) {
+        // Show bookmarks as a list page with empty state
+        document.getElementById('list-title').textContent = t('bookmarks');
+        document.getElementById('list-count').textContent = '0 articles';
+        document.getElementById('list-subfilters').innerHTML = '';
+        document.getElementById('list-subfilters').style.display = 'none';
+        currentFiltered = [];
+        document.getElementById('card-container').innerHTML = `<div class="empty-state">${t('bookmarkEmpty')}</div>`;
+        showPage('list');
+        window.scrollTo(0, 0);
+      } else {
+        listMode = 'bookmark';
+        listKey = 'all';
+        document.getElementById('list-title').textContent = t('bookmarks');
+        document.getElementById('list-count').textContent = bmArticles.length + ' articles';
+        document.getElementById('list-subfilters').innerHTML = '';
+        document.getElementById('list-subfilters').style.display = 'none';
+        currentFiltered = bmArticles;
+        renderCards();
+        showPage('list');
+        window.scrollTo(0, 0);
+      }
+    } else {
+      showPage('top');
+    }
+  });
+
+  /* ===== Dark Mode ===== */
+  function initDarkMode() {
+    const saved = localStorage.getItem('fomus_theme');
+    if (saved === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+    updateDarkModeBtn();
+  }
+  function updateDarkModeBtn() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const btn = document.getElementById('dark-mode-btn');
+    if (isDark) {
+      btn.innerHTML = '&#9788;'; // sun
+      btn.classList.add('active');
+    } else {
+      btn.innerHTML = '&#9790;'; // moon
+      btn.classList.remove('active');
+    }
+  }
+  document.getElementById('dark-mode-btn').addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    const isDark = document.documentElement.classList.contains('dark');
+    localStorage.setItem('fomus_theme', isDark ? 'dark' : 'light');
+    updateDarkModeBtn();
+    // Re-style map tiles if map exists
+    if (window._fomusMap) {
+      updateMapTiles();
+    }
+  });
+  initDarkMode();
+
+  /* ===== Search ===== */
+  const searchOverlay = document.getElementById('search-overlay');
+  const searchInput = document.getElementById('search-input');
+  const searchResults = document.getElementById('search-results');
+
+  function openSearch() {
+    searchOverlay.classList.add('visible');
+    searchInput.value = '';
+    searchInput.placeholder = t('searchPlaceholder');
+    searchResults.innerHTML = `<div class="search-empty">${t('searchHint')}</div>`;
+    setTimeout(() => searchInput.focus(), 100);
+  }
+  function closeSearch() {
+    searchOverlay.classList.remove('visible');
+    searchInput.value = '';
+  }
+
+  document.getElementById('search-open-btn').addEventListener('click', openSearch);
+  document.getElementById('search-close').addEventListener('click', closeSearch);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && searchOverlay.classList.contains('visible')) {
+      closeSearch();
+    }
+  });
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) {
+      searchResults.innerHTML = `<div class="search-empty">${t('searchHint')}</div>`;
+      return;
+    }
+
+    // Search archive articles
+    const archiveMatches = articles.filter(a => {
+      const title = (getTitle(a) || '').toLowerCase();
+      const excerpt = (getExcerpt(a) || '').toLowerCase();
+      return title.includes(q) || excerpt.includes(q);
+    });
+
+    // Search note articles
+    const noteMatches = (typeof noteArticles !== 'undefined')
+      ? noteArticles.filter(a => {
+          const title = (a.title || '').toLowerCase();
+          const excerpt = (a.excerpt || '').toLowerCase();
+          return title.includes(q) || excerpt.includes(q);
+        })
+      : [];
+
+    if (archiveMatches.length === 0 && noteMatches.length === 0) {
+      searchResults.innerHTML = `<div class="search-empty">${t('searchEmpty')}</div>`;
+      return;
+    }
+
+    let html = '';
+
+    if (archiveMatches.length > 0) {
+      html += `<div class="search-results-label">${t('searchResultsArchive')} (${archiveMatches.length})</div>`;
+      archiveMatches.forEach(a => {
+        const country = getCountry(a);
+        const flagCode = FLAG_CODES[a.country] || '';
+        const flagSrc = flagCode ? `https://flagcdn.com/${flagCode}.svg` : '';
+        const readMin = calcReadingTime(a.body);
+        html += `
+        <div class="article-card search-result-card" data-id="${a.id}">
+          <div class="card-thumb">
+            ${getThumbnail(a)
+              ? `<img src="${getThumbnail(a)}" alt="" loading="lazy">`
+              : `<div class="card-thumb-placeholder">&#9633;</div>`}
+          </div>
+          <div class="card-content">
+            <div class="card-meta-row">
+              <span class="card-num">No.${a.num}</span>
+              ${a.date ? `<span class="card-date">${a.date}</span>` : ''}
+              <span class="card-country-tag">
+                ${flagSrc ? `<img class="card-country-flag" src="${flagSrc}" alt="${country}">` : ''}
+                ${country}
+              </span>
+              <span class="card-reading-time">${formatReadingTime(readMin)}</span>
+            </div>
+            <div class="card-title">${escapeHtml(getTitle(a))}</div>
+            <div class="card-excerpt">${escapeHtml(getExcerpt(a))}</div>
+          </div>
+        </div>`;
+      });
+    }
+
+    if (noteMatches.length > 0) {
+      html += `<div class="search-results-label">${t('searchResultsNote')} (${noteMatches.length})</div>`;
+      noteMatches.forEach(a => {
+        html += `
+        <div class="article-card search-note-card" data-url="${a.url}">
+          <div class="card-thumb">
+            ${a.eyecatch
+              ? `<img src="${a.eyecatch}" alt="" loading="lazy">`
+              : `<div class="card-thumb-placeholder">&#9998;</div>`}
+          </div>
+          <div class="card-content">
+            <div class="card-meta-row">
+              <span class="card-date">${a.date}</span>
+              ${a.is_paid ? `<span class="card-num" style="color:#5cb85c">有料</span>` : ''}
+            </div>
+            <div class="card-title">${escapeHtml(a.title)}</div>
+            ${a.excerpt ? `<div class="card-excerpt">${escapeHtml(a.excerpt)}</div>` : ''}
+          </div>
+        </div>`;
+      });
+    }
+
+    searchResults.innerHTML = html;
+
+    // Click handlers for search results
+    searchResults.querySelectorAll('.search-result-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = parseInt(card.dataset.id);
+        closeSearch();
+        const a = articles.find(x => x.id === id);
+        if (a) {
+          openList('country', a.country);
+          showDetail(id);
+        }
+      });
+    });
+    searchResults.querySelectorAll('.search-note-card').forEach(card => {
+      card.addEventListener('click', () => {
+        window.open(card.dataset.url, '_blank');
+      });
+    });
+  });
+
+  /* ===== World Map ===== */
+  const COUNTRY_COORDS = {
+    'アイルランド': [53.35, -6.26],
+    'フィリピン': [10.31, 123.89],
+    'アメリカ': [40.71, -74.01],
+    'ドバイ(UAE)': [25.20, 55.27],
+    'マレーシア': [3.14, 101.69],
+    'スペイン': [41.39, 2.17],
+    'フランス': [48.86, 2.35],
+    'ラトビア': [56.95, 24.11],
+    'リトアニア': [54.69, 25.28],
+    'エストニア': [59.44, 24.75],
+    'マルタ': [35.90, 14.51],
+    'ポルトガル': [38.72, -9.14],
+    'ノルウェー': [59.91, 10.75],
+    'デンマーク': [55.68, 12.57],
+    'ポーランド': [52.23, 21.01],
+    'スウェーデン': [59.33, 18.07],
+    'イギリス': [51.51, -0.13],
+    'ギリシャ': [37.98, 23.73],
+    'キプロス': [35.17, 33.36],
+    '日本': [35.68, 139.69],
+    '中国': [39.90, 116.40],
+    'ルーマニア': [44.43, 26.10],
+    'ベルギー': [50.85, 4.35],
+    'バーレーン': [26.23, 50.59],
+    'サウジアラビア': [24.71, 46.68],
+    '台湾': [25.03, 121.57],
+    'カタール': [25.29, 51.53],
+    'オマーン': [23.59, 58.54],
+  };
+
+  function getMapTileUrl() {
+    const isDark = document.documentElement.classList.contains('dark');
+    if (isDark) {
+      return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    }
+    return 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  }
+
+  let _currentTileLayer = null;
+  function updateMapTiles() {
+    if (!window._fomusMap) return;
+    if (_currentTileLayer) window._fomusMap.removeLayer(_currentTileLayer);
+    _currentTileLayer = L.tileLayer(getMapTileUrl(), {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(window._fomusMap);
+  }
+
+  function initWorldMap() {
+    if (!window.L) return;
+    const mapEl = document.getElementById('world-map');
+    if (!mapEl) return;
+
+    const map = L.map('world-map', {
+      center: [30, 30],
+      zoom: 2,
+      minZoom: 2,
+      maxZoom: 8,
+      scrollWheelZoom: false,
+      zoomControl: true,
+    });
+    window._fomusMap = map;
+
+    updateMapTiles();
+
+    // Add markers for each country with articles
+    const goldIcon = L.divIcon({
+      className: '',
+      html: `<div style="width:12px;height:12px;background:var(--gold,#c9a84c);border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6],
+    });
+
+    countriesSorted.forEach(([name, info]) => {
+      const coords = COUNTRY_COORDS[name];
+      if (!coords) return;
+      const displayName = getCountryDisplay(name);
+      const marker = L.marker(coords, { icon: goldIcon }).addTo(map);
+      marker.bindPopup(`
+        <div class="map-popup-name">${displayName}</div>
+        <div class="map-popup-count">${info.count} articles</div>
+      `);
+      marker.on('click', () => {
+        // After popup, also allow navigation
+        marker.once('popupclose', () => {});
+      });
+      // Double click to navigate
+      marker.on('dblclick', () => {
+        openList('country', name);
+      });
+      // Single click on popup content
+      marker.on('popupopen', () => {
+        const popupEl = marker.getPopup().getElement();
+        if (popupEl) {
+          popupEl.style.cursor = 'pointer';
+          popupEl.addEventListener('click', (e) => {
+            if (e.target.closest('.leaflet-popup-close-button')) return;
+            openList('country', name);
+          });
+        }
+      });
+    });
+
+    // Fit to bounds of all markers
+    const allCoords = countriesSorted
+      .map(([name]) => COUNTRY_COORDS[name])
+      .filter(Boolean);
+    if (allCoords.length > 0) {
+      map.fitBounds(allCoords, { padding: [30, 30], maxZoom: 4 });
+    }
+  }
+
+  /* ===== Timeline View ===== */
+  let timelineVisible = false;
+
+  function renderTimeline() {
+    const container = document.getElementById('timeline-view');
+    if (!container) return;
+
+    // Sort all articles by date, newest first
+    const sorted = articles.slice().sort((a, b) => {
+      const ad = a.date || '';
+      const bd = b.date || '';
+      const am = ad.match(/(\d{4})[./-](\d{2})[./-](\d{2})/);
+      const bm = bd.match(/(\d{4})[./-](\d{2})[./-](\d{2})/);
+      const at = am ? Date.UTC(+am[1], +am[2] - 1, +am[3]) : 0;
+      const bt = bm ? Date.UTC(+bm[1], +bm[2] - 1, +bm[3]) : 0;
+      return bt - at;
+    });
+
+    // Group by month/year
+    let lastMonthKey = '';
+    let html = '';
+
+    sorted.forEach(a => {
+      const dm = (a.date || '').match(/(\d{4})[./-](\d{2})/);
+      const monthKey = dm ? `${dm[1]}.${dm[2]}` : 'Unknown';
+      const monthLabel = dm ? `${dm[1]}${t('yearSuffix')} ${parseInt(dm[2])}月` : '';
+
+      if (monthKey !== lastMonthKey) {
+        if (lang === 'en') {
+          const months = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          const mlabel = dm ? `${months[parseInt(dm[2])] || dm[2]} ${dm[1]}` : 'Unknown';
+          html += `<div class="timeline-month-label">${mlabel}</div>`;
+        } else {
+          html += `<div class="timeline-month-label">${monthLabel || monthKey}</div>`;
+        }
+        lastMonthKey = monthKey;
+      }
+
+      const country = getCountry(a);
+      const readMin = calcReadingTime(a.body);
+
+      html += `
+      <div class="timeline-track">
+        <div class="timeline-entry" data-id="${a.id}">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">${a.date || ''}</div>
+          <div class="timeline-card">
+            <div class="timeline-card-meta">
+              <span class="timeline-card-num">No.${a.num}</span>
+              <span class="timeline-card-country">${country}</span>
+              <span class="card-reading-time">${formatReadingTime(readMin)}</span>
+            </div>
+            <div class="timeline-card-title">${escapeHtml(getTitle(a))}</div>
+            <div class="timeline-card-excerpt">${escapeHtml(getExcerpt(a))}</div>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.timeline-entry').forEach(entry => {
+      entry.addEventListener('click', () => {
+        const id = parseInt(entry.dataset.id);
+        const a = articles.find(x => x.id === id);
+        if (a) {
+          openList('country', a.country);
+          showDetail(id);
+        }
+      });
+    });
+  }
+
+  document.getElementById('timeline-toggle-btn').addEventListener('click', function() {
+    timelineVisible = !timelineVisible;
+    this.classList.toggle('active', timelineVisible);
+    const yearNav = document.getElementById('year-nav');
+    const tlView = document.getElementById('timeline-view');
+
+    if (timelineVisible) {
+      this.textContent = lang === 'en' ? 'Cards' : 'カード';
+      yearNav.style.display = 'none';
+      tlView.classList.add('visible');
+      renderTimeline();
+    } else {
+      this.textContent = t('timeline');
+      yearNav.style.display = '';
+      tlView.classList.remove('visible');
+    }
+  });
+
   /* ===== Init ===== */
   applyUILang();
   renderTopPage();
   initNotePage();
+  updateBookmarkBadge();
+  // Only init map if app is already visible (already authenticated)
+  if (sessionStorage.getItem('fomus_auth') === 'true') {
+    initWorldMap();
+  }
   handleHash();
 })();
 </script>
