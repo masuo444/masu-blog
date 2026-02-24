@@ -21,12 +21,12 @@ import urllib.request
 import urllib.error
 import subprocess
 
-ROOT = "/Users/masuo/Downloads/海外活動記録の全て"
+ROOT = "/Users/masuo/Desktop/海外活動記録の全て"
 OUT = os.path.join(ROOT, "output")
 
 NOTE_USER = "kei_masu"
 NOTE_API_LIST = f"https://note.com/api/v2/creators/{NOTE_USER}/contents?kind=note&page={{page}}"
-NOTE_API_DETAIL = "https://note.com/api/v1/notes/{key}"
+NOTE_API_DETAIL = "https://note.com/api/v3/notes/{key}"
 
 # ============================================================
 # 海外遠征記として活動記録に取り込むシリーズのキーワード
@@ -111,18 +111,19 @@ def fetch_all_note_articles():
             break
 
         for c in contents:
-            note_url = c.get('note_url', '')
+            note_url = c.get('noteUrl', '') or c.get('note_url', '')
             key = c.get('key', '')
             if not key and note_url:
                 key = note_url.rstrip('/').split('/')[-1]
 
+            raw_date = c.get('publishAt', '') or c.get('publish_at', '') or c.get('createdAt', '') or c.get('created_at', '')
             all_articles.append({
                 'title': c.get('name', ''),
                 'url': note_url,
                 'note_key': key,
-                'date': (c.get('publish_at') or c.get('created_at', ''))[:10],
+                'date': raw_date[:10],
                 'eyecatch': c.get('eyecatch', '') or '',
-                'is_paid': c.get('is_limited', False) or (c.get('price', 0) > 0),
+                'is_paid': c.get('isLimited', False) or c.get('is_limited', False) or (c.get('price', 0) > 0),
                 'excerpt': (c.get('body', '') or '')[:200].strip(),
             })
 
