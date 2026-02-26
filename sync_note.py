@@ -21,7 +21,7 @@ import urllib.request
 import urllib.error
 import subprocess
 
-ROOT = "/Users/masuo/Desktop/海外活動記録の全て"
+ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "output")
 
 NOTE_USER = "kei_masu"

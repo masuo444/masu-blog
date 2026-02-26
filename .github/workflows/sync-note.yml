@@ -1,0 +1,34 @@
+name: Sync Note Articles
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'  # 2時間おき
+  workflow_dispatch:        # 手動実行
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run sync_note.py
+        run: python3 sync_note.py
+
+      - name: Commit and push if changed
+        run: |
+          git diff --quiet && git diff --staged --quiet && exit 0
+          git add output/articles.js output/note_articles.js
+          git commit -m "Sync note $(date -u +%Y-%m-%d)"
+          git push
