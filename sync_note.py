@@ -217,24 +217,84 @@ def main():
     # 2. Fetch all note articles
     all_notes = fetch_all_note_articles()
 
-    # 3. Find new expedition articles to add to archive
+    # Build lookup maps for existing archive articles
+    # day_key → archive index, normalize_title → archive index
+    archive_by_day_key = {}
+    archive_by_norm_title = {}
+    for i, a in enumerate(archive):
+        dk = extract_day_key(a['title'])
+        if dk:
+            archive_by_day_key[dk] = i
+        archive_by_norm_title[normalize_title(a['title'])] = i
+
+    # 3. Process expedition articles: add new, update existing
     new_expeditions = []
+    updated_count = 0
+    archive_changed = False
+
     for a in all_notes:
         if not is_expedition(a['title']):
             continue
-        if normalize_title(a['title']) in archive_titles:
-            continue
-        # Check by series+day number (catches title rewording)
+
+        nt = normalize_title(a['title'])
         dk = extract_day_key(a['title'])
-        if dk and dk in archive_day_keys:
-            print(f"  Skipping (day duplicate): {a['title'][:60]}")
-            continue
-        new_expeditions.append(a)
+
+        # Check if this article already exists in archive
+        existing_idx = None
+        if nt in archive_by_norm_title:
+            existing_idx = archive_by_norm_title[nt]
+        elif dk and dk in archive_by_day_key:
+            existing_idx = archive_by_day_key[dk]
+
+        if existing_idx is not None:
+            # --- UPDATE existing article ---
+            existing = archive[existing_idx]
+            print(f"  Checking update: No.{existing['num']} {a['title'][:50]}...")
+            body_html = fetch_article_body(a['note_key'])
+            time.sleep(0.3)
+
+            if not body_html:
+                continue
+
+            # Add paid notice if needed
+            if a.get('is_paid'):
+                body_html += (
+                    '\n<p style="text-align:center;margin-top:2rem;padding:1rem;'
+                    'background:rgba(201,168,76,0.1);border-radius:8px;'
+                    'font-size:0.85rem;color:#8a857e;">'
+                    f'この記事の続きは <a href="{a["url"]}" target="_blank" '
+                    'rel="noopener" style="color:#c9a84c;">note</a> で'
+                    'お読みいただけます（有料記事）</p>'
+                )
+
+            plain = re.sub(r'<[^>]+>', '', body_html)
+            plain = re.sub(r'\s+', ' ', plain).strip()
+
+            # Only update if body actually changed
+            if existing.get('body', '').strip() != body_html.strip():
+                existing['body'] = body_html
+                existing['excerpt'] = plain[:100]
+                existing['title'] = a['title']
+                # Update thumbnail
+                imgs = re.findall(r'<img[^>]+src="([^"]+)"', body_html)
+                existing['thumbnail'] = a.get('eyecatch', '') or (imgs[0] if imgs else existing.get('thumbnail', ''))
+                # Update date if was empty
+                if not existing.get('date'):
+                    date = a['date'].replace('-', '.')
+                    existing['date'] = date
+                    existing['year'] = date[:4] if date else ''
+                updated_count += 1
+                archive_changed = True
+                print(f"    Updated: No.{existing['num']}")
+            else:
+                print(f"    No change.")
+        else:
+            # --- NEW article ---
+            new_expeditions.append(a)
 
     if new_expeditions:
         print(f"\nNew expedition articles to add: {len(new_expeditions)}")
         for a in new_expeditions:
-            # Fetch full body
             print(f"  Fetching: {a['title'][:60]}...")
             body_html = fetch_article_body(a['note_key'])
             time.sleep(0.5)
@@ -243,11 +303,9 @@ def main():
             year = date[:4] if date else ''
             country = detect_country(a['title'])
 
-            # Thumbnail
             imgs = re.findall(r'<img[^>]+src="([^"]+)"', body_html)
             thumbnail = a.get('eyecatch', '') or (imgs[0] if imgs else '')
 
-            # Paid article notice
             if a.get('is_paid'):
                 body_html += (
                     '\n<p style="text-align:center;margin-top:2rem;padding:1rem;'
@@ -275,15 +333,16 @@ def main():
                 'thumbnail': thumbnail,
             })
             archive_titles.add(normalize_title(a['title']))
+            archive_changed = True
             print(f"    Added: No.{max_id:03d} {country or '?'}")
 
-        # Save updated archive
+    if archive_changed:
         js = "const articles = " + json.dumps(archive, ensure_ascii=False, indent=2) + ";\n"
         with open(articles_path, 'w') as f:
             f.write(js)
-        print(f"\nUpdated archive: {len(archive)} articles")
+        print(f"\nArchive saved: {len(archive)} articles ({updated_count} updated, {len(new_expeditions)} new)")
     else:
-        print("\nNo new expedition articles to add.")
+        print(f"\nNo changes to archive. ({updated_count} updated, {len(new_expeditions)} new)")
 
     # 4. Build note_articles.js (excluding duplicates, expeditions, セブ活動記)
     note_articles = []
