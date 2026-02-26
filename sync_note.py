@@ -153,6 +153,16 @@ def normalize_title(t):
     return t.lower().strip()
 
 
+def extract_day_key(title):
+    """Extract series+day key for duplicate detection (e.g. '中東遠征記_day1')."""
+    for series in EXPEDITION_SERIES:
+        if series in title:
+            m = re.search(r'[Dd]ay\s*(\d+)', title)
+            if m:
+                return f"{series}_day{m.group(1)}"
+    return None
+
+
 def detect_country(title):
     """Detect country from title keywords."""
     for country, keywords in COUNTRY_RULES.items():
@@ -197,6 +207,11 @@ def main():
     print(f"Existing archive: {len(archive)} articles")
 
     archive_titles = set(normalize_title(a['title']) for a in archive)
+    archive_day_keys = set()
+    for a in archive:
+        dk = extract_day_key(a['title'])
+        if dk:
+            archive_day_keys.add(dk)
     max_id = max(a['id'] for a in archive)
 
     # 2. Fetch all note articles
@@ -208,6 +223,11 @@ def main():
         if not is_expedition(a['title']):
             continue
         if normalize_title(a['title']) in archive_titles:
+            continue
+        # Check by series+day number (catches title rewording)
+        dk = extract_day_key(a['title'])
+        if dk and dk in archive_day_keys:
+            print(f"  Skipping (day duplicate): {a['title'][:60]}")
             continue
         new_expeditions.append(a)
 
