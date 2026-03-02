@@ -16,10 +16,18 @@ sync_note.py — note.com の記事を FOMUS Archive に自動同期するスク
 import os
 import re
 import json
+import ssl
 import time
 import urllib.request
 import urllib.error
 import subprocess
+
+# SSL context — certifi があれば使い、なければシステムデフォルト
+try:
+    import certifi
+    SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+except ImportError:
+    SSL_CTX = ssl.create_default_context()
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "output")
@@ -34,6 +42,7 @@ NOTE_API_DETAIL = "https://note.com/api/v3/notes/{key}"
 # ============================================================
 EXPEDITION_SERIES = [
     "中東遠征記",
+    "シンガポール遠征記",
     "台湾一周", "台湾プロジェクト", "台湾と枡",
     # 今後追加例: "南米遠征記", "アフリカ遠征記" etc.
 ]
@@ -41,6 +50,7 @@ EXPEDITION_SERIES = [
 # 遠征記シリーズごとのカテゴリ
 EXPEDITION_CATEGORY = {
     "中東遠征記": "mideast",
+    "シンガポール遠征記": "singapore",
     "台湾一周": "taiwan",
     "台湾プロジェクト": "taiwan",
     "台湾と枡": "taiwan",
@@ -80,6 +90,7 @@ FLAG_CODES_NEW = {
     'サウジアラビア': 'sa',
     'カタール': 'qa',
     'オマーン': 'om',
+    'シンガポール': 'sg',
 }
 
 
@@ -88,7 +99,7 @@ def fetch_json(url, retries=3):
     for i in range(retries):
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            with urllib.request.urlopen(req, timeout=15, context=SSL_CTX) as resp:
                 return json.loads(resp.read().decode('utf-8'))
         except Exception as e:
             if i == retries - 1:
@@ -394,13 +405,21 @@ def main():
 
     print("\n=== Sync complete ===")
 
-    # 5. Git auto-commit & push (best-effort)
+    # 5. Copy output → docs for GitHub Pages deploy
+    docs = os.path.join(ROOT, "docs")
+    if os.path.isdir(docs):
+        import shutil
+        for fname in ("articles.js", "note_articles.js"):
+            shutil.copy2(os.path.join(OUT, fname), os.path.join(docs, fname))
+        print("Copied output → docs/")
+
+    # 6. Git auto-commit & push (best-effort)
     try:
         if not os.path.isdir(os.path.join(ROOT, ".git")):
             print("Git repo not found. Skipping auto-commit.")
             return
 
-        # Check for changes (only output assets)
+        # Check for changes
         status = subprocess.run(
             ["git", "-C", ROOT, "status", "--porcelain"],
             check=False, capture_output=True, text=True
@@ -410,8 +429,10 @@ def main():
             print("No git changes. Skipping commit/push.")
             return
 
-        # Stage updated output files only
-        subprocess.run(["git", "-C", ROOT, "add", "output/articles.js", "output/note_articles.js"], check=False)
+        # Stage updated files
+        subprocess.run(["git", "-C", ROOT, "add",
+                         "output/articles.js", "output/note_articles.js",
+                         "docs/articles.js", "docs/note_articles.js"], check=False)
 
         # Commit
         msg = time.strftime("Sync note %Y-%m-%d")
