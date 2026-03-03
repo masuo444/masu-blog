@@ -20,6 +20,7 @@ import ssl
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 import subprocess
 
 # SSL context — certifi があれば使い、なければシステムデフォルト
@@ -92,6 +93,98 @@ FLAG_CODES_NEW = {
     'オマーン': 'om',
     'シンガポール': 'sg',
 }
+
+# ============================================================
+# DeepL Free API — 未翻訳記事の自動翻訳
+# ============================================================
+DEEPL_API_KEY = os.environ.get('DEEPL_API_KEY', '')
+DEEPL_ENDPOINT = 'https://api-free.deepl.com/v2/translate'
+
+# 日本語国名 → 英語（index.html の COUNTRY_EN と同じ）
+COUNTRY_EN = {
+    'フィリピン': 'Philippines', 'アイルランド': 'Ireland',
+    'エストニア': 'Estonia',
+    'マレーシア': 'Malaysia', 'アメリカ': 'USA',
+    'ドバイ(UAE)': 'UAE', 'スペイン': 'Spain',
+    'フランス': 'France', 'ラトビア': 'Latvia',
+    'リトアニア': 'Lithuania', 'マルタ': 'Malta',
+    'ポルトガル': 'Portugal', 'ノルウェー': 'Norway',
+    'デンマーク': 'Denmark', 'ポーランド': 'Poland',
+    'スウェーデン': 'Sweden', 'イギリス': 'UK',
+    'ギリシャ': 'Greece', 'キプロス': 'Cyprus',
+    '日本': 'Japan', '中国': 'China',
+    'ルーマニア': 'Romania', 'ベルギー': 'Belgium',
+    'バーレーン': 'Bahrain', 'サウジアラビア': 'Saudi Arabia',
+    '台湾': 'Taiwan', 'カタール': 'Qatar', 'オマーン': 'Oman',
+    'シンガポール': 'Singapore',
+}
+
+
+class QuotaExceeded(Exception):
+    """DeepL Free API の月間無料枠 (50万文字) を超過した。"""
+
+
+def deepl_translate(text, tag_handling=None):
+    """DeepL Free API で日→英翻訳。枠超過時は QuotaExceeded を送出。"""
+    params = {
+        'auth_key': DEEPL_API_KEY,
+        'text': text,
+        'source_lang': 'JA',
+        'target_lang': 'EN',
+    }
+    if tag_handling:
+        params['tag_handling'] = tag_handling
+    body = urllib.parse.urlencode(params).encode('utf-8')
+    req = urllib.request.Request(DEEPL_ENDPOINT, data=body, method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=30, context=SSL_CTX) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            return data['translations'][0]['text']
+    except urllib.error.HTTPError as e:
+        if e.code == 456:
+            raise QuotaExceeded('DeepL Free quota exceeded (456)')
+        raise
+
+
+def translate_articles(archive):
+    """title_en がない記事を DeepL で翻訳する。翻訳した件数を返す。"""
+    if not DEEPL_API_KEY:
+        print("Skipping translation (DEEPL_API_KEY not set)")
+        return 0
+
+    targets = [a for a in archive if not a.get('title_en')]
+    if not targets:
+        print("All articles already translated.")
+        return 0
+
+    print(f"\nTranslating {len(targets)} articles via DeepL...")
+    translated = 0
+    for a in targets:
+        try:
+            print(f"  Translating No.{a.get('num', a['id'])}: {a['title'][:50]}...")
+            # title — plain text
+            a['title_en'] = deepl_translate(a['title'])
+            # body — HTML
+            a['body_en'] = deepl_translate(a.get('body', ''), tag_handling='html')
+            # excerpt_en — HTML タグ除去して先頭250文字
+            plain = re.sub(r'<[^>]+>', '', a['body_en'])
+            plain = re.sub(r'\s+', ' ', plain).strip()
+            a['excerpt_en'] = plain[:250]
+            # country_en — 辞書ルックアップ（API不要）
+            country_ja = a.get('country', '')
+            a['country_en'] = COUNTRY_EN.get(country_ja, country_ja)
+            translated += 1
+            print(f"    Done: {a['title_en'][:60]}")
+            time.sleep(0.3)
+        except QuotaExceeded:
+            print("  DeepL quota exceeded — saving translated articles so far.")
+            break
+        except Exception as e:
+            print(f"  Translation error for No.{a.get('num', a['id'])}: {e}")
+            continue
+
+    print(f"Translated {translated}/{len(targets)} articles.")
+    return translated
 
 
 def fetch_json(url, retries=3):
@@ -349,12 +442,21 @@ def main():
             print(f"    Added: No.{max_id:03d} {country or '?'}")
 
     if archive_changed:
+        print(f"\nSync result: {len(archive)} articles ({updated_count} updated, {len(new_expeditions)} new)")
+    else:
+        print(f"\nNo sync changes. ({updated_count} updated, {len(new_expeditions)} new)")
+
+    # 3b. DeepL translation for articles missing title_en
+    translated_count = translate_articles(archive)
+
+    # Write articles.js (if sync or translation changed anything)
+    if archive_changed or translated_count > 0:
         js = "const articles = " + json.dumps(archive, ensure_ascii=False, indent=2) + ";\n"
         with open(articles_path, 'w') as f:
             f.write(js)
-        print(f"\nArchive saved: {len(archive)} articles ({updated_count} updated, {len(new_expeditions)} new)")
+        print(f"Archive saved: {len(archive)} articles")
     else:
-        print(f"\nNo changes to archive. ({updated_count} updated, {len(new_expeditions)} new)")
+        print("No changes to write.")
 
     # 4. Build note_articles.js (excluding duplicates, expeditions, セブ活動記)
     note_articles = []

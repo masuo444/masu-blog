@@ -24,6 +24,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Run sync_note.py
+        env:
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
         run: python3 sync_note.py
 
       - name: Commit and push if changed
