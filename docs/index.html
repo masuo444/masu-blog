@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FOMUS Archive — 海外活動記録</title>
+<!-- 本体は FOMUS GUILD に移行済み。検索評価をそちらへ集約する -->
+<link rel="canonical" href="https://guild.fomusglobal.com/archive">
+<meta name="description" content="枡を持って世界を歩いた活動記録。最新版は FOMUS GUILD で公開しています。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -819,6 +822,18 @@ body {
   .auth-divider { flex-direction: row; min-width: auto; gap: 1rem; margin: 0.6rem 0; }
   .auth-divider::before, .auth-divider::after { width: 100%; height: 1px; }
 }
+.top-guild-link {
+  margin: 14px 0 4px;
+  font-size: 0.9rem;
+}
+.top-guild-link a {
+  color: var(--ink-light);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 2px;
+  transition: opacity .2s ease;
+}
+.top-guild-link a:hover { opacity: .6; }
 </style>
 </head>
 <body>
@@ -870,6 +885,12 @@ body {
       <div class="top-brand">FOMUS ARCHIVE</div>
       <h1 class="top-title">海外活動記録</h1>
       <p class="top-subtitle">まっすーの活動をありのままに</p>
+      <!-- FOMUS GUILD への導線。記事の本体はそちらに移行済み -->
+      <p class="top-guild-link">
+        <a href="https://guild.fomusglobal.com/archive" rel="noopener">
+          最新版は FOMUS GUILD で読めます →
+        </a>
+      </p>
       <div class="top-stats">
         <div><strong id="stat-articles">0</strong>articles</div>
         <div><strong id="stat-countries">0</strong>countries</div>
